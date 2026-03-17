@@ -1,172 +1,280 @@
-# Member객체에 curd를 담당, 메뉴용 메서드 등...
-from LMS.common import Session
-from LMS.domain import Member
+import os
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash, jsonify, Flask
+from functools import wraps
+from datetime import date
+from LMS.common import log_system, upload_file
+from LMS.common.db import fetch_query, execute_query
+from LMS.common.session import Session
+from LMS.domain import Board
 
-class MemberService:
-    # 여기는 주소가 아닌 cls로 활용함 -> __init__가 없다.
+app = Flask(__name__)
 
-    @classmethod
-    def load(cls): # db에 연결 테스트 목적으로 생성
-        conn = Session.get_connection() # lms db를 가져와서 conn에 넣음
-        # 예외발생가능 있음
-        try :
-            with conn.cursor() as cursor: # db에서 가져온 객체 1줄을 cursor라고 함
-                cursor.execute("select count(*) as cnt from members")
-                #               Member 테이블에서 개수나온 것을 cnt변수에 넣어라
-                # cursor.execute() sql문 실행용
-                count = cursor.fetchone()['cnt'] # dict 타입으로 나옴 cnt : 5
-                #             .fetchone() 1개의 결과가 나올때 readone
-                #             .fetchall() 여러개의 결과가 나올때 readall
-                #             .fetchmany(3) 3개의 결과만 보고 싶을 때 (최상위3개)
-                print(f"시스템에 현재 등록된 회원수는 {count}명 입니다. ")
+FLASK_APP_KEY = os.getenv('FLASK_APP_KEY')
+app.secret_key = FLASK_APP_KEY
 
-        except : # 예외발생 문구
-            print("MemberServie.load()메서드 오류발생....")
+# Blueprint 설정
+member_bp = Blueprint('member', __name__)
 
-        finally: # 항상 출력되는 코드
-            print("데이터베이스 접속 종료됨....")
-            conn.close()
+def login_required(f):
+    @wraps(f)
 
-    @classmethod
-    def login(cls):
-        print("\n[로그인]")
-        uid = input("아이디: ")
-        pw = input("비밀번호: ")
+    def decorated_function(*args, **kwargs):
 
-        conn = Session.get_connection()
-        # print("Session.get_connection()" + conn)
+        if 'user_id' not in session:
+            flash('로그인이 필요한 서비스입니다.')
+            return redirect(url_for('member.login')) # bp이름.함수명
+        return f(*args, **kwargs)
 
-        try:
-            with conn.cursor() as cursor:
-                # 1. 아이디와 비밀번호가 일치하는 회원 조회
-                sql = "SELECT * FROM members WHERE uid = %s AND password = %s"
-                print("sql = " + sql)
-                cursor.execute(sql, (uid, pw))
-                row = cursor.fetchone()
-                # print("row" + row[0])
+    return decorated_function
 
-                if row:
-                    member = Member.from_db(row)
-                    # 2. 계정 활성화 여부 체크
-                    if not member.active:
-                        print("비활성화된 계정입니다. 관리자에게 문의하세요.")
-                        return
+# 로그인
+@member_bp.route('/login', methods=['GET', 'POST'])
+def login():
 
-                    Session.login(member)
-                    print(f"{member.name}님 로그인 성공 ({member.role})")
-                else:
-                    print("아이디 또는 비밀번호가 틀렸습니다.")
-        except : # 예외발생 문구
-            print("MemberServie.login()메서드 오류발생....")
-        finally:
-            conn.close()
+    if request.method == 'GET':
+        return render_template('login.html')
 
-    @classmethod
-    def logout(cls):
-        # 1. 먼저 세션에 로그인 정보가 있는지 확인
-        if not Session.is_login():
-            print("\n[알림] 현재 로그인 상태가 아닙니다.")
-            return
+    uid = request.form.get('uid')
+    upw = request.form.get('upw')
 
-        # 2. 세션의 로그인 정보 삭제
-        Session.logout()
-        print("\n[성공] 로그아웃 되었습니다. 안녕히 가세요!")
+    # [개선] SELECT 로직이 한 줄로 줄어듦
+    user = fetch_query("SELECT * FROM members WHERE uid = %s", (uid,), one=True)
 
-    @classmethod
-    def signup(cls):
-        print("\n[회원가입]")
-        uid = input("아이디: ")
+    if not bool(user['active']):
+        return "<script>alert('계정이 삭제되었습니다.');history.back();</script>"
 
-        conn = Session.get_connection()
-        try:
-            with conn.cursor() as cursor:
-                # 1. 중복 체크
-                check_sql = "SELECT id FROM members WHERE uid = %s"
-                cursor.execute(check_sql, (uid,)) # 튜플은 1개여도 쉼표 필수!!!
-                # print("cursor.fetchone() : " + cursor.fetchone()[0])
-                # SQL 쿼리 결과에서 단 한 개의 행(row)만 튜플(tuple) 형태로 반환합니다.
-                # 호출할 때마다 다음 행으로 넘어가며, 더 이상 행이 없으면 None을 반환합니다.
-                # 딕셔너리 커서 사용 시 딕셔너리 형태로도 출력됩니다
-                if cursor.fetchone():
-                    print("이미 존재하는 아이디입니다.")
-                    return
+    if user and user['password'] == upw:
+        session['user_id'] = user['id']
+        session['user_name'] = user['name']
+        session['user_role'] = user['role']
+        session['user_profile'] = user['profile_img']
+        log_system('ACCESS', 'INFO', 'LOGIN_SUCCESS', f'로그인 UID : {uid}')
+        return redirect(url_for('index'))
 
-                pw = input("비밀번호: ")
-                name = input("이름: ")
+    else:
+        log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'로그인 시도한 UID: {uid}')
+        return "<script>alert('로그인 실패');history.back();</script>"
 
-                # 2. 데이터 삽입
-                insert_sql = "INSERT INTO members (uid, password, name) VALUES (%s, %s, %s)"
-                cursor.execute(insert_sql, (uid, pw, name))
-                conn.commit()
-                print("회원가입 완료! 로그인해 주세요.")
-        except Exception as e:
-            conn.rollback()
-            # 트랜젝션 : with안쪽에 2개이상의 sql문이 둘다 true일때는 commit()
-            #                    2중 한개라도 오류가 발생하면 rollback()
-            print(f"회원가입 오류: {e}")
-        finally:
-            conn.close()
+# 로그아웃
+@member_bp.route('/logout', methods=['GET', 'POST'])
+def logout():
+    session.clear()
+    flash('로그아웃 되었습니다.')
+    return redirect(url_for('login'))
 
-    @classmethod
-    def modify(cls): # 회원 수정 메서드
-        if not Session.is_login():
-            print("로그인 후 이용 가능합니다.")
-            return
+# 회원가입
+@member_bp.route('/signup', methods=['GET', 'POST'])
+def join():
 
+    if request.method == 'GET':
+        return render_template('join.html')
 
-        member = Session.login_member
-        print(f"내정보확인 : {member}") # Member.__str__()
-        print("\n[내 정보 수정]\n1. 이름 변경  2. 비밀번호 변경 3. 계정비활성 및 탈퇴 0. 취소")
-        sel = input("선택: ")
+    if request.method == 'GET':
+        # 현재 연도를 구해서 템플릿으로 전달합니다.
+        today_year = date.today().year
+        return render_template('join.html', year_now=today_year)
 
-        new_name = member.name
-        new_pw = member.pw
+    uid = request.form.get('uid')
+    password = request.form.get('password')
+    name = request.form.get('name')
+    #회원가입 시 생년월일 추가(만 14세 이상만 가입 가능)
+    # [추가] 따로 입력받은 년, 월, 일을 가져옴
+    b_year = request.form.get('birth_year')
+    b_month = request.form.get('birth_month')
+    b_day = request.form.get('birth_day')
 
-        if sel == "1":
-            new_name = input("새 이름: ")
-        elif sel == "2":
-            new_pw = input("새 비밀번호: ")
-        elif sel == "3":
-            print("회원 중지 및 탈퇴를 진행합니다.")
-            cls.delete()
+    try:
+
+        # [추가] 만 나이 계산 및 14세 체크
+        if b_year and b_month and b_day:
+
+            birth_date = date(int(b_year), int(b_month), int(b_day))
+            today = date.today()
+            age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+
+            if age < 14:
+                return '<script>alert("만 14세 이상만 가입 가능합니다.");history.back();</script>'
+
+            # DB에 저장할 날짜 형식 (YYYY-MM-DD)
+            birthdate_str = birth_date.strftime('%Y-%m-%d')
+
         else:
-            return
+            return '<script>alert("생년월일을 모두 입력해주세요.");history.back();</script>'
 
-        conn = Session.get_connection()
+        # 1. 중복 체크 (SELECT)
+        exist = fetch_query("SELECT id FROM members WHERE uid = %s", (uid,), one=True)
+
+        if exist:
+            return '<script>alert("이미 존재하는 아이디입니다.");history.back();</script>'
+
+        # 2. 회원 가입 (INSERT - DML)
+        # [개선] 복잡한 conn, cursor, commit 코드가 사라지고 함수 호출만 남음
+        hashed_pw = password
+        execute_query("INSERT INTO members (uid, password, name, birthdate) VALUES (%s, %s, %s, %s)", (uid, hashed_pw, name, birthdate_str))
+
+        return '<script>alert("가입 완료!"); location.href="/login";</script>'
+
+    except Exception as e:
+        print(f"가입 에러: {e}")
+        return '가입 중 오류 발생'
+
+# 회원 정보 수정
+@member_bp.route('/member/modify', methods=['GET', 'POST'])
+@login_required
+def member_edit():
+
+    if request.method == 'GET':
+        user = fetch_query("SELECT * FROM members WHERE id = %s", (session['user_id'],), one=True)
+        return render_template('member_edit.html', user=user)
+
+    # POST 요청 (정보 수정)
+    new_name = request.form.get('name')
+    new_pw = request.form.get('password')
+
+    try:
+
+        if new_pw:
+            hashed_pw = new_pw
+            # [개선] UPDATE 실행
+            execute_query(
+                "UPDATE members SET name = %s, password = %s WHERE id = %s",
+                (new_name, hashed_pw, session['user_id'])
+            )
+
+        else:
+            execute_query(
+                "UPDATE members SET name = %s WHERE id = %s",
+                (new_name, session['user_id'])
+            )
+
+        session['user_name'] = new_name
+        return "<script>alert('수정 완료');location.href='/mypage';</script>"
+
+    except Exception as e:
+        print(f"수정 에러: {e}")
+        return "수정 중 오류 발생"
+
+# 마이페이지
+@member_bp.route('/mypage')
+def mypage():
+
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    # 1. 유저 정보 가져오기 (이때 profile_img 컬럼 데이터가 포함되어야 합니다)
+    user = fetch_query("SELECT * FROM members WHERE id = %s", (session['user_id'],), one=True)
+
+    # 2. 활동 요약 정보
+    sql_count = """
+        SELECT 
+            COUNT(*) as total_cnt,
+            COUNT(CASE WHEN (SELECT COUNT(*) FROM reports WHERE board_id = b.id) >= 1 THEN 1 END) as reported_cnt
+        FROM boards b
+        WHERE b.member_id = %s AND b.active = 1
+    """
+    count_data = fetch_query(sql_count, (session['user_id'],), one=True)
+
+    board_count = count_data['total_cnt'] if count_data else 0
+    reported_count = count_data['reported_cnt'] if count_data else 0
+
+    # 3. render_template 시 user 객체를 통째로 넘기면 user.profile_img를 HTML에서 쓸 수 있습니다.
+    return render_template('mypage.html',
+                           user=user,
+                           board_count=board_count,
+                           reported_count=reported_count)
+
+
+# 마이페이지 - 프로필 사진
+@member_bp.route('/profile/upload', methods=['POST'])
+def profile_upload():
+
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    print('request.files :', request.files)
+
+    if 'profile_img' not in request.files:
+        return "<script>alert('파일이 없습니다.');history.back();</script>"
+
+    file = request.files['profile_img']
+    print('file :', file)
+
+    if file.filename == '':
+        return "<script>alert('선택된 파일이 없습니다.');history.back();</script>"
+
+    if file:
+
         try:
-            with conn.cursor() as cursor:
-                sql = "UPDATE members SET name = %s, password = %s WHERE id = %s"
-                cursor.execute(sql, (new_name, new_pw, member.id))
-                conn.commit()
+            file_url = upload_file(file, folder="profiles")
 
-                # 메모리(세션) 정보도 동기화
-                member.name = new_name
-                member.pw = new_pw
-                print("정보 수정 완료")
-        finally:
-            conn.close()
+            if file_url:
+                origin_name = file.filename
+                save_name = file_url
+                file_path = file_url
+                print('file_path :', file_path)
+                # [4] DB 업데이트
+                sql = "UPDATE members SET profile_img = %s WHERE id = %s"
+                execute_query(sql, (file_path, session['user_id']))
 
-    @classmethod
-    def delete(cls):
-        if not Session.is_login(): return
-        member = Session.login_member
+                return "<script>alert('프로필 사진이 변경되었습니다.');location.href='/mypage';</script>"
 
-        print("\n[회원 탈퇴]\n1. 완전 탈퇴  2. 계정 비활성화")
-        sel = input("선택: ")
+        except Exception as e:
+            # 어떤 에러인지 정확히 알기 위해 f-string 사용
+            return f"<script>alert('오류 발생: {str(e)}');history.back();</script>"
 
-        conn = Session.get_connection()
-        try:
-            with conn.cursor() as cursor:
-                if sel == "1":
-                    sql = "DELETE FROM members WHERE id = %s"
-                    cursor.execute(sql, (member.id,))
-                    print("회원 탈퇴 완료")
-                elif sel == "2":
-                    sql = "UPDATE members SET active = FALSE WHERE id = %s"
-                    cursor.execute(sql, (member.id,))
-                    print("계정 비활성화 완료")
+    return "<script>alert('업로드 실패');history.back();</script>"
 
-                conn.commit()
-                Session.logout()
-        finally:
-            conn.close()
+# 마이페이지 - 작성한 게시물 조회
+@member_bp.route('/board/my', methods=['GET', 'POST'])
+def my_board_list() :
+
+    if 'user_id' not in session :
+        return redirect(url_for('login'))
+
+    conn = Session.get_connection()
+
+    try :
+        with conn.cursor() as cursor :
+
+            # board_likes 테이블의 데이터를 참조하여 JOIN 쿼리 작성
+            # COUNT(bl.id)를 통해 게시물별 좋아요 개수를 가져옵니다.
+            sql = """
+                  SELECT 
+                      b.*, 
+                      m.name as writer_name,
+                      COUNT(bl.id) as like_count
+                  FROM boards b
+                  JOIN members m ON b.member_id = m.id
+                  LEFT JOIN board_likes bl ON b.id = bl.board_id
+                  WHERE b.member_id = %s
+                  GROUP BY b.id, m.name
+                  ORDER BY b.id DESC
+                  """
+            cursor.execute(sql, (session['user_id'],))
+            rows = cursor.fetchall()
+
+            boards = []
+
+            for row in rows :
+                board = Board.from_db(row)
+
+                # 1. 쿼리 결과에서 가져온 like_count를 객체에 주입 (UndefinedError 방지)
+                board.like_count = row.get('like_count', 0)
+
+                # 2. 아직 존재 여부가 불확실한 속성들은 기본값 0으로 설정
+                # (이렇게 하면 board_list.html에서 오류가 발생하지 않습니다)
+                if not hasattr(board, 'dislike_count') :
+                    board.dislike_count = 0
+
+                if not hasattr(board, 'comment_count') :
+                    board.comment_count = 0
+
+                boards.append(board)
+
+            # pagination=None을 넘겨주어 템플릿의 페이지네이션 에러를 방지합니다.
+            return render_template('board_list.html',
+                                   boards=boards,
+                                   list_title="내가 작성한 게시물",
+                                   pagination=None)
+
+    finally :
+        conn.close()

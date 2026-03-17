@@ -1,0 +1,63 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container" style="margin-top: 100px; margin-bottom: 100px;">
+    <div class="row justify-content-center">
+        <div class="col-md-5 col-lg-4">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-body p-5">
+
+                    <div class="text-center mb-4">
+                        <img src="{{ url_for('static', filename='logo/communa_logo.svg') }}"
+                             alt="Communa Logo" style="height: 60px;" class="mb-3">
+                        <h3 class="fw-bold text-dark">Welcome Back</h3>
+                        <p class="text-muted small">Communa 서비스에 로그인하세요</p>
+                    </div>
+
+                    <form action="/login" method="POST">
+                        <div class="form-floating mb-3">
+                            <input type="text" name="uid" class="form-control" id="floatingInput" placeholder="ID" required>
+                            <label for="floatingInput" class="text-muted">아이디</label>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <input type="password" name="upw" class="form-control" id="floatingPassword" placeholder="Password" required>
+                            <label for="floatingPassword" class="text-muted">비밀번호</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm"
+                                style="background-color: #20828A; border: none;">
+                            로그인
+                        </button>
+                    </form>
+
+                    <div class="mt-4 text-center">
+                        <span class="text-muted small">계정이 없으신가요?</span>
+                        <a href="/join" class="text-decoration-none ms-1 fw-bold" style="color: #20828A;">회원가입</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="/" class="text-muted text-decoration-none small">
+                    <i class="bi bi-arrow-left me-1"></i> 메인페이지로 돌아가기
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 입력창 포커스 시 테두리 색상 변경 */
+    .form-control:focus {
+        border-color: #20828A;
+        box-shadow: 0 0 0 0.25rem rgba(32, 130, 138, 0.25);
+    }
+
+    /* 카드 배경에 부드러운 그라데이션 살짝 추가 가능 */
+    body {
+        background-color: #f8f9fa;
+    }
+
+</style>
+{% endblock %}

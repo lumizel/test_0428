@@ -2,7 +2,7 @@
 # 현재 세션으로 상태관리를 하는데 차후에
 # 프론트를 배우면 웹브라우져에서 세션을 처리한다.
 # html + css + js : w3c라고 부른다. 웹표준!!!
-# 차후에는 이곳이 db관리하는 connetion 영역이 될 것이다.
+# 차후에는 이곳이 db관리하는 connection 영역이 될 것이다.
 
 # 파이참에도 db를 관리하는 메뉴가 있다.
 # 오른쪽 버튼에 db 선택함 -> mysql 워크벤치 대타용
@@ -10,7 +10,7 @@
 import pymysql
 # pip install pymysql 터미널 설치 필수
 # pip install cryptography mysql 인증문제 해결용
-from .db import get_db, CURRENT_DB_CONFIG
+from .db import get_db
 
 class Session:
 
