@@ -1,8 +1,24 @@
+from flask import Blueprint
 from LMS.common.session import Session  # 기존 Session 그대로 활용
 from datetime import datetime, timedelta
 
-class AdminService:
+admin_bp = Blueprint('admin', __name__)
 
+@admin_bp.route('/')
+def get_members(cls):
+    conn = Session.get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM members")
+            return cursor.fetchall()
+    except:
+        print("AdminService.get_members() 오류발생....")
+        return []
+    finally:
+        conn.close()
+
+
+class AdminService:
     @classmethod
     def get_members(cls):
         conn = Session.get_connection()
@@ -34,3 +50,8 @@ class AdminService:
             return []
         finally:
             conn.close()
+
+    @classmethod
+    def get_today_new_boards(cls, boards):
+        since = datetime.now() - timedelta(hours=3)
+        return len([m for m in boards if m['created_at'] >= since])
