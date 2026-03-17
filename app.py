@@ -16,6 +16,7 @@ from LMS.common import init_app
 # 서비스 모듈
 from LMS.service.MemberService import member_bp
 from LMS.service.AdminService import AdminService
+from LMS.service.introduce import introduce_bp
 
 
 app = Flask(__name__)
@@ -39,6 +40,7 @@ def index():
 # Blueprint 등록
 # TODO : app.py에 등록할 때 항상 url_prefix를 붙여서 넣기
 app.register_blueprint(member_bp, url_prefix='/member')
+app.register_blueprint(introduce_bp, url_prefix='/introduce')
 
 @app.teardown_appcontext
 def close_db(e=None):
