@@ -61,6 +61,45 @@ def add_member():
     return redirect(url_for('admin.dashboard'))
 
 
+# =============게시글================
+
+@admin_bp.route('/board/hide/<int:board_id>', methods=['POST'])
+def hide_board(board_id):
+    AdminService.set_board_active(board_id, 0)
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/board/restore/<int:board_id>', methods=['POST'])
+def restore_board(board_id):
+    AdminService.set_board_active(board_id, 1)
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/board/unreport/<int:board_id>', methods=['POST'])
+def unreport_board(board_id):
+    AdminService.delete_board_reports(board_id)
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/board/pin/<int:board_id>', methods=['POST'])
+def pin_board(board_id):
+    AdminService.set_board_pinned(board_id, 1)
+    return redirect(url_for('admin.dashboard'))
+
+@admin_bp.route('/board/update/<int:board_id>', methods=['POST'])
+def update_board(board_id):
+    title   = request.form.get('title')
+    content = request.form.get('content')
+    AdminService.update_board(board_id, title, content)
+    return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/board/detail/<int:board_id>')
+def board_detail(board_id):
+    from flask import jsonify
+    board = AdminService.get_board_detail(board_id)
+    if not board:
+        return jsonify({'error': '게시글 없음'}), 404
+    board['created_at'] = board['created_at'].strftime('%Y.%m.%d %H:%M') if board.get('created_at') else ''
+    return jsonify(board)
+
 class AdminService:
     # 멤버 전체 조회
     @classmethod
@@ -82,27 +121,6 @@ class AdminService:
         # 이미 넘어온 members 객체 재활용 → 쿼리 추가 없음
         since = datetime.now() - timedelta(hours=24)
         return len([m for m in members if m['created_at'] >= since])
-
-    # 게시글 전체 조회
-    @classmethod
-    def get_boards(cls):
-        conn = Session.get_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM boards")
-                return cursor.fetchall()
-        except Exception as e:
-            print(f"AdminService.get_boards() 오류발생 : {e}")
-            return []
-        finally:
-            conn.close()
-
-    # 3시간 기준 신규 게시글 조회
-    @classmethod
-    def get_today_new_boards(cls, boards):
-        since = datetime.now() - timedelta(hours=3)
-        return len([m for m in boards if m['created_at'] >= since])
-
 
     @classmethod
     def update_member(cls, member_id, name, password, role, active, birthdate):
@@ -165,3 +183,139 @@ class AdminService:
             print(f"AdminService.add_member() 오류발생.... {e}")
             conn.rollback()
             return False
+
+    # 게시글 전체 조회
+    @classmethod
+    def get_boards(cls):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                                SELECT
+                                    b.id,
+                                    b.title,
+                                    b.created_at,
+                                    b.visits,
+                                    b.active,
+                                    b.is_pinned,
+                                    m.name AS author,
+                                    COUNT(r.id) AS report_count
+                                FROM boards b
+                                LEFT JOIN members m ON b.member_id = m.id
+                                LEFT JOIN reports r ON r.board_id = b.id
+                                GROUP BY b.id, b.title, b.created_at, b.visits, b.active, b.is_pinned, m.name
+                                ORDER BY b.created_at DESC
+                            """)
+                return cursor.fetchall()
+        except Exception as e:
+            print(f"AdminService.get_boards() 오류발생 : {e}")
+            return []
+        finally:
+            pass
+
+    # 3시간 기준 신규 게시글 조회
+    @classmethod
+    def get_today_new_boards(cls, boards):
+        since = datetime.now() - timedelta(hours=3)
+        return len([m for m in boards if m['created_at'] >= since])
+
+    @classmethod
+    def set_board_active(cls, board_id, active):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE boards SET active=%s WHERE id=%s",
+                    (active, board_id)
+                )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"set_board_active() 오류: {e}")
+            conn.rollback()
+            return False
+        finally:
+            pass
+
+    @classmethod
+    def delete_board_reports(cls, board_id):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM reports WHERE board_id=%s",
+                    (board_id,)
+                )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"delete_board_reports() 오류: {e}")
+            conn.rollback()
+            return False
+        finally:
+            pass
+
+    @classmethod
+    def set_board_pinned(cls, board_id, is_pinned):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE boards SET is_pinned=%s WHERE id=%s",
+                    (is_pinned, board_id)
+                )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"set_board_pinned() 오류: {e}")
+            conn.rollback()
+            return False
+        finally:
+            pass
+
+    @classmethod
+    def update_board(cls, board_id, title, content):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE boards SET title=%s, content=%s WHERE id=%s",
+                    (title, content, board_id)
+                )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"update_board() 오류: {e}")
+            conn.rollback()
+            return False
+        finally:
+            pass
+
+    @classmethod
+    def get_board_detail(cls, board_id):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                        SELECT b.id, b.title, b.content, b.created_at,
+                               b.visits, b.active, b.is_pinned,
+                               m.name AS author
+                        FROM boards b
+                        LEFT JOIN members m ON b.member_id = m.id
+                        WHERE b.id = %s
+                    """, (board_id,))
+
+                # 신고 이유 조회
+                board = cursor.fetchone()
+                cursor.execute("""
+                                SELECT reason FROM reports
+                                WHERE board_id = %s
+                            """, (board_id,))
+                reports = cursor.fetchall()
+                board['reports'] = [r['reason'] for r in reports] if reports else []
+                return board
+        except Exception as e:
+            print(f"get_board_detail() 오류: {e}")
+            return None
+        finally:
+            pass
