@@ -202,6 +202,16 @@
                         <span class="detail-value">{{ user.uid }}</span>
                     </div>
                     <div class="detail-row">
+                        <span class="detail-label">생년월일</span>
+                        <span class="detail-value">
+                            {% if user.birth_day %}
+                            {{ user.birth_day.strftime('%Y년 %m월 %d일') }}
+                            {% else %}
+                            정보 없음
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-row">
                         <span class="detail-label">가입 일자</span>
                         <span class="detail-value">
                             {% if user.created_at %}
