@@ -7,7 +7,7 @@
 <style>
     .activity-body {
         background-color: #F8F9FA;
-        padding: 50px 0;
+        padding: 50px 0 0 0;
         min-height: 80vh;
     }
 
@@ -88,6 +88,20 @@
         color: #008080;
     }
 
+    .home-back {
+    text-align: center;
+    margin-top: auto;
+    margin-bottom: auto;
+    padding: 30px 0;
+    }
+
+    .home-back a {
+    color: #888;
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-block;
+    }
+
     .item-title { font-weight: 600; margin-bottom: 3px; }
     .item-date { font-size: 12px; color: #999; }
     .empty-msg { text-align: center; padding: 50px 0; color: #ccc; }
@@ -159,8 +173,9 @@
                     {% endif %}
                 </ul>
             </nav>
-        </div>
+        </div> <div class="home-back">
+        <a href="/">홈으로 돌아가기</a>
+    </div>
     </div>
 </div>
-
 {% endblock %}
