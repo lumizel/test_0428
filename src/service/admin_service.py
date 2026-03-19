@@ -31,10 +31,13 @@ def dashboard():
         diff = (today - b['created_at'].date()).days
         if 0 <= diff <= 6:
             week_counts[6 - diff] += 1  # 오늘이 맨 오른쪽
-
     return render_template('admin/admin.html',
                            members=members, new_members=new_members, boards=boards,
-                           new_boards=new_boards, report_count=report_count, week_counts=week_counts,today=today)
+                           new_boards=new_boards, report_count=report_count, week_counts=week_counts,today=today,
+                           current_user_role=session.get('user_role'),
+                           current_user_name=session.get('user_name'),
+                           current_user_img=session.get('user_profile'),
+                           )
 
 @admin_bp.route('/member/delete/<int:member_id>', methods=['POST'])
 def delete_member(member_id):

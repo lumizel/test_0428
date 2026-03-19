@@ -13,8 +13,8 @@ def login_required(f):
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if session.get('user_role') != 'admin':
-            flash('관리자만 이용 가능한 서비스입니다.')
+        if session.get('user_role') not in ('admin','manager'):
+            flash('관리자, 매니저만 이용 가능한 서비스입니다.')
             return redirect('/')
         return f(*args, **kwargs)
     return decorated

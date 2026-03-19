@@ -138,6 +138,12 @@
             font-weight: 800;
             font-size: 0.85rem;
         }
+        .admin-avatar img {
+        width: 34px;
+        height: 34px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
         .admin-info .name { color: #fff; font-weight: 700; font-size: 0.85rem; }
         .admin-info .role { color: rgba(255,255,255,0.4); font-size: 0.72rem; }
 
@@ -523,13 +529,18 @@
 
     <div class="sidebar-footer">
         <div class="admin-profile">
-            <div class="admin-avatar">{{ current_user_name[0] if current_user_name else '?' }}</div>
+            <div class="admin-avatar">
+                {% if current_user_img %}
+                    <img src="{{ current_user_img }}" alt="프로필">
+                {% else %}
+                    {{ current_user_name[0] if current_user_name else '?' }}
+                {% endif %}
+            </div>
             <div class="admin-info">
                 <div class="name">{{ current_user_name }}</div>
                 <div class="role">
-                    {% if current_user_role == 'admin' %}도(道)
-                    {% elif current_user_role == 'manager' %}레(레)
-                    {% else %}미(미)
+                    {% if current_user_role == 'admin' %}관리자
+                    {% elif current_user_role == 'manager' %}매니져
                     {% endif %}
                 </div>
             </div>
