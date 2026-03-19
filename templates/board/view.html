@@ -75,12 +75,6 @@
     }
     .btn-library:hover { background-color: #1a6d74; color: white; }
 
-    /* 신고창 */
-    #report-detail:focus, #report-reason-select:focus {
-    border-color: #20828A !important;
-    box-shadow: 0 0 0 0.25rem rgba(32, 130, 138, 0.25) !important;
-    }
-
     /* 스크랩 버튼 커스텀 스타일 */
     .btn-scrap-custom {
         color: #20828a;
@@ -99,7 +93,6 @@
         background-color: #20828a;
         color: white;
     }
-
 </style>
 
 <div class="container mt-5" style="max-width: 900px;">
@@ -132,7 +125,29 @@
         <div class="view-content">
             {{ board.content | safe }}
         </div>
-
+        {% if files %}
+        <div class="px-4 py-3" style="border-top: 1px solid #f1f3f5; background-color: #fbfcfd;">
+            <p class="text-muted small fw-bold mb-2">
+                <i class="bi bi-paperclip me-1"></i>첨부파일 ({{ files|length }})
+            </p>
+            <ul class="list-unstyled mb-0">
+                {% for file in files %}
+                <li class="mb-1">
+                    <a href="{{ file.download_url }}"
+                       class="text-decoration-none small"
+                       style="color: var(--primary-teal);"
+                       download="{{ file.origin_name }}">
+                        <i class="bi bi-file-earmark-arrow-down me-1"></i>
+                        {{ file.origin_name }}
+                        {% if file.file_size %}
+                        <span class="text-muted">({{ (file.file_size / 1024)|round(1) }} KB)</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
         <div class="text-center mb-2">
             <div class="d-inline-flex gap-3 p-3 rounded-4" style="background-color: #fcfdfe;">
                 <button id="like-btn" class="btn reaction-btn {% if user_liked %}active{% endif %}" onclick="toggleLike({{ board.id }})">
@@ -320,30 +335,6 @@
         });
     }
 
-    // 4. 신고 기능
-    function submitReport(boardId) {
-    const reasonType = document.getElementById('report-reason-select').value;
-    const reasonDetail = document.getElementById('report-detail').value;
-    const fullReason = `${reasonType} : ${reasonDetail}`;
-
-    fetch(`/board/report/${boardId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: fullReason })
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message);
-        if (data.success) {
-            // 모달 닫기
-            const modalElement = document.getElementById('reportModal');
-            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-            modal.hide();
-            location.reload();
-        }
-    })
-    .catch(err => alert("오류가 발생했습니다."));
-
     // 스크랩기능
     function toggleScrap(boardId) {
     // [추가] 클라이언트 사이드에서 1차 체크 (세션 정보가 JS에 없을 수 있으므로 fetch 응답으로 처리)
@@ -375,31 +366,5 @@
     });
 }
 </script>
-
-<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow" style="border-radius: 20px; overflow: hidden;">
-            <div class="modal-header text-white" style="background-color: #20828A; border: none;">
-                <h5 class="modal-title fw-bold"><i class="bi bi-alarm me-2"></i>게시글 신고하기</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted small mb-3">신고 사유를 선택해주세요. 허위 신고 시 이용이 제한될 수 있습니다.</p>
-                <select id="report-reason-select" class="form-select mb-3 border-2" style="border-radius: 10px;">
-                    <option value="부적절한 홍보 게시글">부적절한 홍보 게시글</option>
-                    <option value="음란성 내용">음란성 내용</option>
-                    <option value="명예훼손/저작권 침해">명예훼손/저작권 침해</option>
-                    <option value="욕설 및 비하 발언">욕설 및 비하 발언</option>
-                    <option value="기타">기타</option>
-                </select>
-                <textarea id="report-detail" class="form-control" rows="4" placeholder="상세 사유를 입력해주세요(선택)" style="border-radius: 12px; resize: none;"></textarea>
-            </div>
-            <div class="modal-footer border-0 p-3 bg-light">
-                <button type="button" class="btn px-4 fw-bold" data-bs-dismiss="modal" style="color: #6c757d;">취소</button>
-                <button type="button" class="btn px-4 fw-bold text-white" style="background-color: #20828A; border-radius: 10px;" onclick="submitReport({{ board.id }})">신고 제출</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 {% endblock %}

@@ -151,11 +151,18 @@
                                     <span class="badge bg-danger me-2" style="font-size: 0.7rem;">공지</span>
                                 {% endif %}
 
+                                {# 관리자에게만 숨김 뱃지 표시 #}
+                                {% if session.get('user_role') == 'admin' and board.active == 0 %}
+                                    <span class="badge bg-secondary me-2" style="font-size: 0.7rem;">숨김</span>
+                                {% endif %}
+
                                 {% if board.like_count >= 2 %}
                                     <span class="badge rounded-pill me-2" style="background-color: #8C7E7B; color: #ffffff; font-size: 0.7rem;">HOT</span>
                                 {% endif %}
 
-                                <span class="title-link">{{ board.title }}</span>
+                                <span class="title-link {% if board.active == 0 %}text-decoration-line-through text-muted{% endif %}">
+                                    {{ board.title }}
+                                </span>
 
                                 {% if board.file_count > 0 %}
                                     <span class="ms-1 text-muted" title="첨부파일 있음">
@@ -164,7 +171,7 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="small">{{ board.writer_name }}</td>
+                        <td class="small {% if board.active == 0 %}text-muted{% endif %}">{{ board.writer_name }}</td>
                         <td class="text-muted small">{{ board.created_at.strftime('%Y-%m-%d') if board.created_at }}</td>
                         <td style="color: #e03131; font-size: 0.9rem;">❤️ {{ board.like_count or 0 }}</td>
                         <td style="color: var(--primary-teal); font-size: 0.9rem;">
