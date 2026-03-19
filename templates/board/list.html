@@ -79,6 +79,11 @@
     /* 페이지네이션 색상 (파란색 제거) */
     .page-link { color: #495057 !important; background-color: #fff !important; border: 1px solid #dee2e6 !important; }
     .page-item.active .page-link { background-color: var(--primary-teal) !important; border-color: var(--primary-teal) !important; color: white !important; }
+
+    /* 공지글 줄에 마우스 올렸을 때 살짝 더 진해지게 효과 주기 */
+    .pinned-row:hover {
+        background-color: rgba(184, 229, 224, 0.8) !important;
+    }
 </style>
 
 <div class="container py-5">
@@ -144,7 +149,10 @@
                 </thead>
                 <tbody>
                     {% for board in boards %}
-                    <tr onclick="location.href='/board/view/{{ board.id }}'" style="cursor: pointer;">
+                    <tr onclick="location.href='/board/view/{{ board.id }}'"
+                        style="cursor: pointer; transition: background-color 0.2s; {% if board.is_pinned == 1 %}background-color: rgba(184, 229, 224, 0.6) !important;{% endif %}"
+                        class="{% if board.is_pinned == 1 %}pinned-row{% endif %}">
+
                         <td class="text-start ps-3">
                             <div class="title-wrapper">
                                 {% if board.is_pinned == 1 %}
@@ -160,7 +168,7 @@
                                     <span class="badge rounded-pill me-2" style="background-color: #8C7E7B; color: #ffffff; font-size: 0.7rem;">HOT</span>
                                 {% endif %}
 
-                                <span class="title-link {% if board.active == 0 %}text-decoration-line-through text-muted{% endif %}">
+                                <span class="title-link {% if board.is_pinned == 1 %}fw-bold text-dark{% endif %} {% if board.active == 0 %}text-decoration-line-through text-muted{% endif %}">
                                     {{ board.title }}
                                 </span>
 
@@ -175,7 +183,7 @@
                         <td class="text-muted small">{{ board.created_at.strftime('%Y-%m-%d') if board.created_at }}</td>
                         <td style="color: #e03131; font-size: 0.9rem;">❤️ {{ board.like_count or 0 }}</td>
                         <td style="color: var(--primary-teal); font-size: 0.9rem;">
-                            <i class="bi bi-chat-left-text"></i>💬 {{ board.comment_count or 0 }}
+                            💬 {{ board.comment_count or 0 }}
                         </td>
                     </tr>
                     {% endfor %}

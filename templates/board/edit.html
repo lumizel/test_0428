@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden"
+                 style="background-color: rgba(184, 229, 224, 0.4) !important; border-left: 6px solid #20828A !important;">
+
+                <div class="card-body p-4 p-md-5">
+
+                    <div class="mb-4 px-2">
+                        <h2 class="fw-bold mb-1" style="letter-spacing: -1px;">게시글 수정</h2>
+                        <p class="text-muted mb-0 small">작성했던 내용을 다시 다듬습니다.</p>
+                    </div>
+
+                    <form action="/board/edit/{{ board.id }}" method="POST" enctype="multipart/form-data" onsubmit="return confirmEdit();">
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-2">제목</label>
+                            <input type="text" name="title" class="form-control form-control-lg border-2 rounded-3 fs-6"
+                                   value="{{ board.title }}" placeholder="제목을 입력하세요" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-2">내용</label>
+                            <textarea id="summernote" name="content" required>{{ board.content }}</textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-2">첨부파일</label>
+                            <div class="p-3 border rounded-3 bg-white">
+                                {% if board.file_path %}
+                                <div class="mb-2 small text-muted">
+                                    <strong>현재 파일:</strong> {{ board.origin_name }}
+                                </div>
+                                {% endif %}
+                                <input type="file" name="file" class="form-control form-control-sm border-0 shadow-none bg-white">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 pt-4 mt-2 border-top justify-content-end">
+                            <div class="col-auto">
+                                <a href="/board/view/{{ board.id }}" class="btn btn-light px-4 py-2 fw-bold rounded-pill border">
+                                    취소
+                                </a>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn text-white px-4 py-2 fw-bold rounded-pill shadow-sm"
+                                        style="background-color: #20828A; border: none;">
+                                    <i class="bi bi-check2-all me-1"></i> 수정완료
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#summernote').summernote({
+            placeholder: '내용을 입력해주세요.',
+            tabsize: 2,
+            height: 450,
+            lang: 'ko-KR',
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture', 'video']],
+                ['view', ['fullscreen', 'codeview']]
+            ]
+        });
+    });
+
+    function confirmEdit() {
+        // 알림창을 띄우고 사용자가 '확인'을 누르면 true를 반환해서 폼이 전송됨
+        alert("수정이 완료되었습니다!");
+        return true;
+    }
+
+</script>
+
+<style>
+    .form-control:focus { border-color: #20828A !important; box-shadow: 0 0 0 0.25rem rgba(32, 130, 138, 0.15) !important; }
+    .note-editor.note-frame { border-radius: 0.5rem !important; overflow: hidden; background-color: #fff !important; }
+</style>
+{% endblock %}

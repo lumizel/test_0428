@@ -270,7 +270,8 @@ def board_edit(board_id):
         if row['member_id'] != session.get('user_id'):
             return "<script>alert('수정 권한이 없습니다.'); history.back();</script>"
         board = Board.from_db(row)
-        return render_template('board_edit.html', board=board)
+        return render_template('board/edit.html', board=board)
+
     elif request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
@@ -278,7 +279,7 @@ def board_edit(board_id):
         sql = "UPDATE boards SET title = %s, content = %s WHERE id = %s"
         try:
             execute_query(sql, (title, content, board_id))
-            return redirect(url_for('board_view', board_id=board_id))
+            return redirect(f'/board/view/{board_id}')
         except Exception as e:
             print(e)
     return None
