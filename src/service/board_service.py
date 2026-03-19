@@ -8,7 +8,7 @@ from flask import Blueprint, session, request, render_template, url_for, redirec
 from src.common import Session, login_required
 from src.common.db import fetch_query, execute_query
 from src.domain import Board
-from src.common.storage import upload_file
+from src.common.storage import upload_file, get_file_info
 from bleach.css_sanitizer import CSSSanitizer
 
 
@@ -22,7 +22,6 @@ cloudinary.config(
     secure = True
 )
 
-# 게시물 작성
 @board_bp.route('/write', methods=['GET', 'POST'])
 @login_required
 def board_write():
@@ -73,21 +72,21 @@ def board_write():
             with conn.cursor() as cursor:
                 # [A] posts 테이블에 저장 (attachments가 posts를 참조하므로)
                 # ERD 기준 컬럼명: member_id, title, content
-                sql_post = "INSERT INTO posts (member_id, title, content) VALUES (%s, %s, %s)"
+                sql_post = "INSERT INTO boards (member_id, title, content) VALUES (%s, %s, %s)"
                 cursor.execute(sql_post, (member_id, title, clean_content))
 
                 # 방금 생성된 posts 테이블의 id 가져오기
-                new_post_id = cursor.lastrowid
+                new_board_id = cursor.lastrowid
 
                 # [B] attachments 테이블에 저장
                 if file_info:
                     # ERD 컬럼명: post_id, origin_name, save_name, file_path, file_size
                     sql_file = """
-                        INSERT INTO attachments (post_id, origin_name, save_name, file_path, file_size) 
+                        INSERT INTO files (board_id, origin_name, save_name, file_path, file_size) 
                         VALUES (%s, %s, %s, %s, %s)
                     """
                     cursor.execute(sql_file, (
-                        new_post_id,
+                        new_board_id,
                         file_info['origin_name'],
                         file_info['save_name'],
                         file_info['file_path'],
@@ -107,127 +106,70 @@ def board_write():
 # 게시물 목록
 @board_bp.route('/list', methods=['GET', 'POST'])
 def board_list():
+    # 1. 파라미터 수신
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
+    show_pinned = request.args.get('show_pinned', 'on')
     search = request.args.get('search', '').strip()
     search_type = request.args.get('search_type', 'title')
     sort = request.args.get('sort', 'latest')
     offset = (page - 1) * per_page
 
-    # ── 검색 조건 ──
-    search_query = ""
+    # 2. WHERE 절 구성
+    where_clauses = ["b.active = 1"] if session.get('user_role') != 'admin' else ["1=1"]
+    if show_pinned != 'on':
+        where_clauses.append("b.is_pinned = 0")
+
     query_args = []
     if search:
         if search_type == 'title':
-            search_query = "AND title LIKE %s"
-            query_args = [f"%{search}%"]
+            where_clauses.append("b.title LIKE %s")
+            query_args.append(f"%{search}%")
         elif search_type == 'content':
-            search_query = "AND content LIKE %s"
-            query_args = [f"%{search}%"]
+            where_clauses.append("b.content LIKE %s")
+            query_args.append(f"%{search}%")
         elif search_type == 'all':
-            search_query = "AND (title LIKE %s OR content LIKE %s)"
-            query_args = [f"%{search}%", f"%{search}%"]
+            where_clauses.append("(b.title LIKE %s OR b.content LIKE %s)")
+            query_args.extend([f"%{search}%", f"%{search}%"])
 
-    # ── 1. 전체 개수 (공지 포함, 페이지네이션용) ──
-    count_sql = f"""
-        SELECT SUM(cnt) as total FROM (
-            SELECT COUNT(*) as cnt FROM boards WHERE 1=1 {search_query}
-            UNION ALL
-            SELECT COUNT(*) as cnt FROM posts  WHERE 1=1 {search_query}
-        ) as combined_count
-    """
-    count_res = fetch_query(count_sql, tuple(query_args * 2), one=True)
-    total_count = int(count_res['total']) if count_res and count_res['total'] else 0
-    total_pages = ceil(total_count / per_page) if total_count else 1
+    where_sentence = " WHERE " + " AND ".join(where_clauses)
 
-    # ── 정렬 기준 ──
-    order_map = {
-        'latest':  'combined.created_at DESC',
-        'oldest':  'combined.created_at ASC',
-        'views':   'combined.visits DESC',
-    }
-    order_clause = order_map.get(sort, 'combined.created_at DESC')
+    # 3. 정렬 조건
+    if sort == 'popular':
+        order_sentence = "ORDER BY b.is_pinned DESC, like_count DESC, b.created_at DESC"
+    else:
+        order_sentence = "ORDER BY b.is_pinned DESC, b.created_at DESC"
 
-    # ── 2. 목록 조회 ──
-    # boards: likes(board_likes), comments(board_comments), attachments 없음
-    # posts : likes 없음, attachments(attachments 테이블), comments 없음(posts 전용 댓글 없으므로 0)
-    # 공지(is_pinned=1)는 sort 무관하게 항상 상단 고정
+    # 4. 페이징 및 데이터 조회
+    count_sql = f"SELECT COUNT(*) as cnt FROM boards b {where_sentence}"
+    count_res = fetch_query(count_sql, tuple(query_args), True)
+    total_count = count_res['cnt'] if count_res else 0
+    total_pages = ceil(total_count / per_page)
+
     sql = f"""
-        SELECT * FROM (
-            SELECT
-                b.id,
-                b.member_id,
-                b.title,
-                b.content,
-                b.created_at,
-                b.visits,
-                b.is_pinned,
-                'board' AS origin_table,
-                m.name  AS writer_name,
-                m.profile_img AS writer_profile,
-                (SELECT COUNT(*) FROM board_likes    WHERE board_id = b.id) AS like_count,
-                (SELECT COUNT(*) FROM board_comments WHERE board_id = b.id) AS comment_count,
-                0 AS file_count
-            FROM boards b
-            JOIN members m ON b.member_id = m.id
-            WHERE 1=1 {search_query}
-
-            UNION ALL
-
-            SELECT
-                p.id,
-                p.member_id,
-                p.title,
-                p.content,
-                p.created_at,
-                p.view_count AS visits,
-                0            AS is_pinned,
-                'post'       AS origin_table,
-                m.name       AS writer_name,
-                m.profile_img AS writer_profile,
-                0 AS like_count,
-                0 AS comment_count,
-                (SELECT COUNT(*) FROM attachments WHERE post_id = p.id) AS file_count
-            FROM posts p
-            JOIN members m ON p.member_id = m.id
-            WHERE 1=1 {search_query}
-        ) AS combined
-        ORDER BY combined.is_pinned DESC, {order_clause}
+        SELECT b.*, m.name as writer_name,
+               (SELECT COUNT(*) FROM board_likes WHERE board_id = b.id) as like_count,
+               (SELECT COUNT(*) FROM board_comments WHERE board_id = b.id) as comment_count,
+               (SELECT COUNT(*) FROM files WHERE board_id = b.id) as file_count
+        FROM boards b
+        JOIN members m ON b.member_id = m.id
+        {where_sentence}
+        {order_sentence}
         LIMIT %s OFFSET %s
     """
-    final_args = tuple(query_args * 2 + [per_page, offset])
-    rows = fetch_query(sql, final_args)
+    rows = fetch_query(sql, tuple(query_args + [per_page, offset]))
 
-    # ── 3. 객체 변환 ──
     boards = []
     for row in rows:
         board = Board.from_db(row)
-        board.like_count    = row.get('like_count', 0)
-        board.comment_count = row.get('comment_count', 0)
-        board.file_count    = row.get('file_count', 0)
-        board.writer_name   = row.get('writer_name', '')
-        board.writer_profile = row.get('writer_profile')
-        board.origin_table  = row.get('origin_table')
-        board.visits        = row.get('visits', 0)
+        board.like_count = row['like_count']
+        board.comment_count = row['comment_count']
+        board.is_pinned = row.get('is_pinned', 0)
+        board.file_count = row.get('file_count', 0)  # 추가
         boards.append(board)
 
-    pagination = {
-        'page':        page,
-        'total_pages': total_pages,
-        'has_prev':    page > 1,
-        'has_next':    page < total_pages,
-    }
-
-    return render_template(
-        'board/list.html',
-        boards=boards,
-        pagination=pagination,
-        search=search,
-        search_type=search_type,
-        sort=sort,
-        per_page=per_page,
-        total_count=total_count,
-    )
+    pagination = {'page': page, 'total_pages': total_pages, 'has_prev': page > 1, 'has_next': page < total_pages, 'prev_num': page - 1, 'next_num': page + 1}
+    return render_template('board/list.html', boards=boards, pagination=pagination, search=search, search_type=search_type, sort=sort, per_page=per_page, show_pinned=show_pinned)
 
 # 게시물 상세보기
 @board_bp.route('/view/<int:board_id>')
@@ -300,9 +242,18 @@ def board_view(board_id):
     board.dislikes = dislike_count
     board.report_count = row['report_count']  # 혹시 화면에 신고수 띄울까봐 추가
     board.writer_profile = row['writer_profile']
+    raw_files = fetch_query("SELECT * FROM files WHERE board_id = %s", (board_id,))
+    files = []
+    for f in raw_files:
+        info = get_file_info(f['file_path'])  # file_path = Cloudinary URL
+        if info:
+            info['origin_name'] = f['origin_name']
+            info['file_size'] = f['file_size']
+            files.append(info)
 
     return render_template('board/view.html',
                            board=board,
+                           files=files,
                            user_liked=user_liked,
                            user_disliked=user_disliked,
                            comments=root_comments)
