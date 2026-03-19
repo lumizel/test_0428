@@ -11,19 +11,33 @@
         min-height: 80vh;
     }
 
-    /* 상단 타이틀 (기존과 동일) */
+    /* 1. 부모 박스: Flex박스로 정렬 방식을 완전히 바꿈 */
     .activity-header-box {
         max-width: 700px;
         margin: 0 auto 20px auto;
         background-color: #008080;
         color: #FFFFFF;
-        padding: 15px;
         border-radius: 12px;
-        text-align: center;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+        /* 가로, 세로 정중앙 정렬의 핵심 3줄 */
+        display: flex;
+        justify-content: center; /* 가로 중앙 */
+        align-items: center;     /* 세로 중앙 */
+
+        height: 55px;            /* 높이를 고정해야 정중앙이 명확히 보여 */
+        padding: 0;              /* 패딩 때문에 밀리는 거 방지 */
     }
 
-    /* 메인 카드 (기존과 동일) */
+    /* 2. 내부 글자: 브라우저가 멋대로 넣는 여백 제거 */
+    .activity-header-box h2 {
+        font-size: 20px;         /* 글자 크기 줄임 */
+        margin: 0 !important;    /* 위아래 치우침의 주범인 마진을 0으로 강제 고정 */
+        padding: 0;
+        line-height: 1;          /* 줄 간격 때문에 생기는 미세한 오차 제거 */
+    }
+
+    /* 메인 카드 */
     .activity-card-container {
         max-width: 700px;
         margin: 0 auto;
@@ -40,7 +54,7 @@
     }
 
     .nav-link {
-        color: #888;
+        color: #333;
         font-weight: 600;
         border: none !important;
         padding: 15px 25px;
@@ -81,7 +95,7 @@
     .home-back { text-align: center; margin-top: 25px; }
     .home-back a { color: #888; text-decoration: none; font-size: 14px; }
 
-    /* 페이지네이션 색상 (파란색 제거) */
+    /* 페이지네이션 색상 */
     .page-link { color: #495057 !important; background-color: #fff !important; border: 1px solid #dee2e6 !important; }
     .page-item.active .page-link { background-color: var(--primary-teal) !important; border-color: var(--primary-teal) !important; color: white !important; }
 </style>
@@ -97,7 +111,7 @@
         <div class="activity-card-container">
             <ul class="nav nav-tabs" id="activityTab" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button">작성 게시물</button>
+                    <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button">작성한 게시물</button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" id="likes-tab" data-bs-toggle="tab" data-bs-target="#likes" type="button">좋아요</button>
