@@ -14,6 +14,7 @@ from src.common import fetch_query, execute_query, log_system, login_required
 # storage.py가 src 폴더 안에 있다면 아래와 같이 import
 from src.common.storage import upload_file
 from src.domain import Member
+import math
 
 mypage_bp = Blueprint('mypage', __name__)
 
@@ -94,63 +95,6 @@ def member_edit():
         print(f"수정 에러: {e}")
         return "수정 중 오류 발생"
 
-# 작성한 게시물 조회
-@mypage_bp.route('/board/my')
-@login_required
-def my_board_list() :
-
-    if 'user_id' not in session :
-        return redirect(url_for('login'))
-
-    conn = Session.get_connection()
-
-    try :
-        with conn.cursor() as cursor :
-
-            # board_likes 테이블의 데이터를 참조하여 JOIN 쿼리 작성
-            # COUNT(bl.id)를 통해 게시물별 좋아요 개수를 가져옵니다.
-            sql = """
-                  SELECT 
-                      b.*, 
-                      m.name as writer_name,
-                      COUNT(bl.id) as like_count
-                  FROM boards b
-                  JOIN members m ON b.member_id = m.id
-                  LEFT JOIN board_likes bl ON b.id = bl.board_id
-                  WHERE b.member_id = %s
-                  GROUP BY b.id, m.name
-                  ORDER BY b.id DESC
-                  """
-            cursor.execute(sql, (session['user_id'],))
-            rows = cursor.fetchall()
-
-            boards = []
-
-            for row in rows :
-                board = Board.from_db(row)
-
-                # 1. 쿼리 결과에서 가져온 like_count를 객체에 주입 (UndefinedError 방지)
-                board.like_count = row.get('like_count', 0)
-
-                # 2. 아직 존재 여부가 불확실한 속성들은 기본값 0으로 설정
-                # (이렇게 하면 board_list.html에서 오류가 발생하지 않습니다)
-                if not hasattr(board, 'dislike_count') :
-                    board.dislike_count = 0
-
-                if not hasattr(board, 'comment_count') :
-                    board.comment_count = 0
-
-                boards.append(board)
-
-            # pagination=None을 넘겨주어 템플릿의 페이지네이션 에러를 방지합니다.
-            return render_template('board_list.html',
-                                   boards=boards,
-                                   list_title="내가 작성한 게시물",
-                                   pagination=None)
-
-    finally :
-        conn.close()
-
 # 프로필
 @mypage_bp.route('/profile/upload', methods=['POST'])
 @login_required
@@ -184,6 +128,7 @@ def profile_upload():
     except Exception as e:
         return f"<script>alert('오류 발생: {str(e)}');history.back();</script>"
 
+# 프로필 삭제
 @mypage_bp.route('/profile/delete', methods=['POST'])
 @login_required
 def profile_delete():
@@ -200,3 +145,63 @@ def profile_delete():
         return "<script>alert('프로필 사진이 삭제되었습니다.'); location.href='/mypage/';</script>"
     except Exception as e:
         return f"<script>alert('삭제 중 오류 발생: {str(e)}'); history.back();</script>"
+
+# 나의 활동 메뉴
+@mypage_bp.route('/my_activity/')
+@login_required
+def my_activity():
+    # 1. 로그인 확인 및 사용자 ID 가져오기
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+
+    # 2. 페이지네이션 설정 (현재 페이지 번호 받기)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # 한 페이지에 보여줄 글 개수
+    offset = (page - 1) * per_page
+
+    # 3. 데이터베이스 조회 (작성 게시물 개수 파악)
+    total_row = fetch_query("SELECT COUNT(*) as cnt FROM boards WHERE member_id = %s AND active = 1", (user_id,), one=True)
+    total_count = total_row['cnt']
+    total_pages = math.ceil(total_count / per_page)
+
+    # 4. 실제 데이터 가져오기 (LIMIT와 OFFSET으로 페이지 자르기)
+    my_posts = fetch_query("""
+        SELECT * FROM boards 
+        WHERE member_id = %s AND active = 1 
+        ORDER BY created_at DESC
+        LIMIT %s OFFSET %s
+    """, (user_id, per_page, offset))
+
+    # 좋아요와 스크랩 데이터
+    my_likes = fetch_query("""
+        SELECT b.*, m.name as writer_name 
+        FROM board_likes bl
+        JOIN boards b ON bl.board_id = b.id
+        JOIN members m ON b.member_id = m.id
+        WHERE bl.member_id = %s
+    """, (user_id,))
+
+    my_scraps = fetch_query("""
+        SELECT b.*, bs.created_at as scrap_date 
+        FROM board_scrap bs
+        JOIN boards b ON bs.board_id = b.id
+        WHERE bs.member_id = %s
+    """, (user_id,))
+
+    # 5. HTML이 기다리고 있는 pagination 객체 만들기
+    pagination_obj = {
+        'page': page,
+        'total_pages': total_pages,
+        'has_prev': page > 1,
+        'has_next': page < total_pages,
+        'prev_num': page - 1,
+        'next_num': page + 1
+    }
+
+    # 6. 모든 데이터를 담아서 렌더링
+    return render_template('mypage/my_activity.html',
+                           my_posts=my_posts,
+                           my_likes=my_likes,
+                           my_scraps=my_scraps,
+                           pagination=pagination_obj)

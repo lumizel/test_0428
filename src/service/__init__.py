@@ -14,5 +14,5 @@ __all__ = [
     'board_bp',
     'admin_bp',
     'faq_bp',
-    'tip_bp',
+    'tip_bp'
 ]
