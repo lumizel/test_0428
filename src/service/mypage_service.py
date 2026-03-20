@@ -71,24 +71,32 @@ def member_edit():
 
     # POST 요청 (정보 수정)
     new_name = request.form.get('name')
+    new_nickname = request.form.get('nickname')
     new_pw = request.form.get('password')
 
     try:
-        if new_pw:
-            hashed_pw = new_pw
-            # [개선] UPDATE 실행
-            execute_query(
-                "UPDATE members SET name = %s, password = %s WHERE id = %s",
-                (new_name, hashed_pw, session['user_id'])
-            )
+        set_clauses = []
+        params = []
 
-        else:
-            execute_query(
-                "UPDATE members SET name = %s WHERE id = %s",
-                (new_name, session['user_id'])
-            )
+        if new_name:
+            set_clauses.append("name = %s")
+            params.append(new_name)
+
+        if new_nickname:
+            set_clauses.append("nickname = %s")
+            params.append(new_nickname)
+
+        if new_pw:
+            set_clauses.append("password = %s")
+            params.append(new_pw)
+
+        if set_clauses:  # 변경할 항목이 하나라도 있을 때만 실행
+            params.append(session['user_id'])
+            sql = f"UPDATE members SET {', '.join(set_clauses)} WHERE id = %s"
+            execute_query(sql, tuple(params))
 
         session['user_name'] = new_name
+        session['user_nickname'] = new_nickname
         return "<script>alert('수정 완료');location.href='/mypage';</script>"
 
     except Exception as e:

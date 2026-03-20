@@ -148,7 +148,7 @@ def board_list():
     total_pages = ceil(total_count / per_page)
 
     sql = f"""
-        SELECT b.*, m.name as writer_name,
+        SELECT b.*, m.name as writer_name, m.nickname as writer_nickname,
                (SELECT COUNT(*) FROM board_likes WHERE board_id = b.id) as like_count,
                (SELECT COUNT(*) FROM board_comments WHERE board_id = b.id) as comment_count,
                (SELECT COUNT(*) FROM files WHERE board_id = b.id) as file_count
@@ -167,6 +167,7 @@ def board_list():
         board.comment_count = row['comment_count']
         board.is_pinned = row.get('is_pinned', 0)
         board.file_count = row.get('file_count', 0)  # 추가
+        board.writer_nickname = row.get('writer_nickname')
         boards.append(board)
 
     pagination = {'page': page, 'total_pages': total_pages, 'has_prev': page > 1, 'has_next': page < total_pages, 'prev_num': page - 1, 'next_num': page + 1}
@@ -183,7 +184,7 @@ def board_view(board_id):
 
         # 2. 게시글 상세 정보 가져오기 (신고 수 서브쿼리 추가)
     sql = """
-            SELECT b.*, m.name as writer_name, m.uid as writer_uid, m.profile_img as writer_profile,
+            SELECT b.*, m.nickname as writer_nickname, m.name as writer_name, m.uid as writer_uid, m.profile_img as writer_profile,
                    (SELECT COUNT(*) FROM reports WHERE board_id = b.id) as report_count
             FROM boards b
             JOIN members m ON b.member_id = m.id
@@ -193,6 +194,7 @@ def board_view(board_id):
     if not row:
         return '<script>alert("존재하지 않는 게시글입니다."); history.back();</script>'
 
+    print(row)
     # 🚩 [신규 추가] 신고 5개 이상 차단 로직 (관리자는 통과)
     if row['report_count'] >= 5:
         if session.get('user_role') != 'admin':
@@ -219,7 +221,7 @@ def board_view(board_id):
 
     # 4. 댓글 및 대댓글 목록 가져오기 (기존 팀원 코드 유지)
     comment_sql = """
-                SELECT c.*, m.name as writer_name, m.uid as writer_uid
+                SELECT c.*, m.name as writer_name, m.nickname as writer_nickname, m.uid as writer_uid
                 FROM board_comments c
                 JOIN members m ON c.member_id = m.id
                 WHERE c.board_id = %s
@@ -243,6 +245,8 @@ def board_view(board_id):
     board.dislikes = dislike_count
     board.report_count = row['report_count']  # 혹시 화면에 신고수 띄울까봐 추가
     board.writer_profile = row['writer_profile']
+    board.writer_nickname = row.get('writer_nickname')
+    board.writer_name = row.get('writer_name')
     raw_files = fetch_query("SELECT * FROM files WHERE board_id = %s", (board_id,))
     files = []
     for f in raw_files:

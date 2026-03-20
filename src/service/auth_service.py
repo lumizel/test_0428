@@ -50,6 +50,7 @@ def login():
     if user['password'] == upw:
         session['user_id'] = user['id']
         session['user_name'] = user['name']
+        session['user_nickname'] = user['nickname']  # 추가
         session['user_role'] = user['role']
         session['user_profile'] = user['profile_img']
         log_system('ACCESS', 'INFO', 'LOGIN_SUCCESS', f'로그인 UID : {uid}')
@@ -74,6 +75,7 @@ def signup():
     uid = request.form.get('uid')
     password = request.form.get('password')
     name = request.form.get('name')
+    nickname = request.form.get('nickname')  # 추가
     # 회원가입 시 생년월일 추가(만 14세 이상만 가입 가능)
     # [추가] 따로 입력받은 년, 월, 일을 가져옴
     b_year = request.form.get('birth_year')
@@ -104,7 +106,7 @@ def signup():
         # 2. 회원 가입 (INSERT - DML)
         # [개선] 복잡한 conn, cursor, commit 코드가 사라지고 함수 호출만 남음
         hashed_pw = password
-        execute_query("INSERT INTO members (uid, password, name, birthdate) VALUES (%s, %s, %s, %s)", (uid, hashed_pw, name, birthdate_str))
+        execute_query("INSERT INTO members (uid, password, name, nickname, birthdate) VALUES (%s, %s, %s, %s, %s)", (uid, hashed_pw, name, nickname, birthdate_str))
 
         return '<script>alert("가입 완료!"); location.href="/auth/login";</script>'
 

@@ -188,7 +188,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td class="small {% if board.active == 0 %}text-muted{% endif %}">{{ board.writer_name }}</td>
+                        <td class="small {% if board.active == 0 %}text-muted{% endif %}">{{ board.writer_nickname if board.writer_nickname else board.writer_name }}</td>
                         <td class="text-muted small">{{ board.created_at.strftime('%Y-%m-%d') if board.created_at }}</td>
                         <td style="color: #e03131; font-size: 0.9rem;">❤️ {{ board.like_count or 0 }}</td>
                         <td style="color: var(--primary-teal); font-size: 0.9rem;">

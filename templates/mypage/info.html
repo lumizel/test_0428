@@ -204,7 +204,7 @@
 
                         <form id="deleteForm" action="/mypage/profile/delete" method="POST" style="display:none;"></form>
                     </div>
-                    <div class="user-name">{{ user.name }}</div>
+                    <div class="user-name">{{ user.nickname }}</div>
                     <div class="role-label">{{ user.role.upper() }} 계정</div>
                 </div>
 
@@ -212,6 +212,10 @@
                     <div class="detail-row">
                         <span class="detail-label">아이디</span>
                         <span class="detail-value">{{ user.uid }}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">이름</span>
+                        <span class="detail-value">{{ user.name }}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">생년월일</span>

@@ -112,7 +112,7 @@
                 <div class="d-flex align-items-center">
                     <img src="{{ board.writer_profile if board.writer_profile else 'https://raw.githubusercontent.com/twbs/icons/main/icons/person-circle.svg' }}"
                          class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
-                    <span class="fw-bold text-dark me-3">{{ board.writer_name }}</span>
+                    <span class="fw-bold text-dark me-3">{{ board.writer_nickname if board.writer_nickname else board.writer_name }}</span>
                     <span>{{ board.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
                 </div>
                 <div>
@@ -205,7 +205,7 @@
                 <div class="mb-4 {% if c.parent_id %}ms-5 ps-3 border-start border-2{% endif %}" id="comment-{{ c.id }}">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
-                            <span class="fw-bold text-dark me-2">{{ c.writer_name }}</span>
+                            <span class="fw-bold text-dark me-2">{{ c.writer_nickname if c.writer_nickname else c.writer_name }}</span>
                             <small class="text-muted">{{ c.created_at }}</small>
                         </div>
                         <button class="btn btn-sm btn-link text-decoration-none p-0 text-muted small" onclick="toggleReplyForm({{ c.id }})">답글</button>
