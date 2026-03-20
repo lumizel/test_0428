@@ -446,6 +446,8 @@ def board_report(board_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
 
+    print('board_id :', board_id)
+
     data = request.get_json()
     reason = data.get('reason')
     reporter_id = session['user_id']

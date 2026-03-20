@@ -146,12 +146,45 @@
                             </div>
                             <i class="bi bi-chevron-right"></i>
                         </a>
-                    {% endfor %}
+                        {% endfor %}
                     {% else %}
-                    <div class="empty-msg">작성한 게시물이 없습니다.</div>
+                        <div class="empty-msg">작성한 게시물이 없습니다.</div>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="likes">
+                    {% if my_likes %}
+                        {% for post in my_likes %}
+                        <a href="/board/view/{{ post.id }}" class="activity-item">
+                            <div>
+                                <div class="item-title">{{ post.title }} <small class="text-danger"></small></div>
+                                <div class="item-date">{{ post.created_at.strftime('%Y-%m-%d') if post.created_at }}</div>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-msg">좋아요 표시한 게시물이 없습니다.</div>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="scraps">
+                    {% if my_scraps %}
+                        {% for post in my_scraps %}
+                        <a href="/board/view/{{ post.id }}" class="activity-item">
+                            <div>
+                                <div class="item-title">{{ post.title }} <small class="text-primary"></small></div>
+                                <div class="item-date">{{ post.created_at.strftime('%Y-%m-%d') if post.created_at }}</div>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-msg">스크랩한 게시물이 없습니다.</div>
                     {% endif %}
                 </div>
             </div>
+
             <nav class="mt-5">
                 <ul class="pagination justify-content-center">
                     {% if pagination.has_prev %}
@@ -173,9 +206,11 @@
                     {% endif %}
                 </ul>
             </nav>
-        </div> <div class="home-back">
-        <a href="/">홈으로 돌아가기</a>
-    </div>
+        </div>
+
+        <div class="home-back mt-4 text-center">
+            <a href="/" class="text-decoration-none text-muted small">홈으로 돌아가기</a>
+        </div>
     </div>
 </div>
 {% endblock %}
