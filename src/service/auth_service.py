@@ -14,6 +14,7 @@ from src.common import (
 
 auth_bp = Blueprint('auth', __name__)
 
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
@@ -22,22 +23,34 @@ def login():
     uid = request.form.get('uid')
     upw = request.form.get('upw')
 
-    # [개선] SELECT 로직이 한 줄로 줄어듦
+    # 1. DB에서 유저 정보를 먼저 가져옵니다.
     user = fetch_query("SELECT * FROM members WHERE uid = %s", (uid,), one=True)
 
-    if not bool(user['active']):
-        return "<script>alert('계정이 삭제되었습니다.');history.back();</script>"
+    # 2. [회원 탈퇴 및 존재 여부 체크]
+    # user가 None이면 DB에 아이디가 없는 것(탈퇴 포함)입니다.
+    if user is None:
+        log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'존재하지 않는 UID 시도: {uid}')
+        return """
+            <script>
+                alert("존재하지 않거나 탈퇴한 계정입니다.");
+                location.href = "/auth/login";
+            </script>
+            """
 
-    if user and user['password'] == upw:
+    # 3. 비밀번호 확인
+    if user['password'] == upw:
+        # 로그인 성공 로직
         session['user_id'] = user['id']
         session['user_name'] = user['name']
         session['user_role'] = user['role']
         session['user_profile'] = user['profile_img']
         log_system('ACCESS', 'INFO', 'LOGIN_SUCCESS', f'로그인 UID : {uid}')
         return redirect(url_for('index'))
+
     else:
-        log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'로그인 시도한 UID: {uid}')
-        return "<script>alert('로그인 실패');history.back();</script>"
+        # 비밀번호 틀림
+        log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'비밀번호 불일치 UID: {uid}')
+        return "<script>alert('아이디 또는 비밀번호가 일치하지 않습니다.');history.back();</script>"
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 def logout():

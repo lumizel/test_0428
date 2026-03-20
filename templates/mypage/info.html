@@ -148,7 +148,7 @@
     .edit-btn {
         display: block;
         width: 100%;
-        padding: 12px;
+        padding: 10px;
         background-color: #fff;
         border: 1px solid #008080;
         color: #008080;
@@ -237,8 +237,10 @@
                         <span class="detail-label">권한</span>
                         <span class="detail-value">{{ '관리자' if user.is_admin() else '일반 사용자' }}</span>
                     </div>
-
+                    <br>
                     <a href="/mypage/edit" class="edit-btn">회원 정보 수정</a>
+                    <br>
+                    <a href="#" onclick="confirmDelete()" class="edit-btn">회원 탈퇴</a>
                 </div>
 
             </div>
@@ -290,6 +292,13 @@ function submitProfile() {
 function deleteProfile() {
     if (confirm("프로필 사진을 삭제하고 기본 이미지로 변경하시겠습니까?")) {
         document.getElementById('deleteForm').submit();
+    }
+}
+
+function confirmDelete() {
+    if (confirm("정말로 탈퇴하시겠습니까?\n모든 활동 내역이 삭제되며 복구할 수 없습니다.")) {
+        // 탈퇴 처리를 위한 서버 경로로 이동
+        location.href = "/mypage/delete_account";
     }
 }
 </script>

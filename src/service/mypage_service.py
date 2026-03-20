@@ -205,3 +205,27 @@ def my_activity():
                            my_likes=my_likes,
                            my_scraps=my_scraps,
                            pagination=pagination_obj)
+
+# 회원 탈퇴
+@mypage_bp.route('/delete_account', methods=['GET', 'POST'])
+@login_required
+def delete_account():
+    user_id = session.get('user_id') # 현재 로그인한 유저의 ID(pk)
+
+    if not user_id:
+        return "<script>alert('로그인이 만료되었습니다.'); location.href='/login';</script>"
+
+    try:
+        # 1. DB에서 해당 회원 삭제 (execute_query 사용)
+        sql = "DELETE FROM members WHERE id = %s"
+        execute_query(sql, (user_id,))
+
+        # 2. 세션 정보 완전히 비우기 (로그아웃 처리)
+        session.clear()
+
+        # 3. 알림 후 메인 페이지로 이동
+        return "<script>alert('회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.'); location.href='/';</script>"
+
+    except Exception as e:
+        # 오류 발생 시 알림 후 이전 페이지로
+        return f"<script>alert('탈퇴 처리 중 오류가 발생했습니다: {str(e)}'); history.back();</script>"
