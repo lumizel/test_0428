@@ -3,6 +3,7 @@ import bleach
 import cloudinary
 import cloudinary.uploader
 import requests
+import urllib.parse
 
 from math import ceil
 from flask import Blueprint, session, request, render_template, url_for, redirect, jsonify, Response
@@ -271,12 +272,19 @@ def download_file(file_id):
     if not f:
         return "파일 없음", 404
 
+    # 외부 URL에서 파일 가져오기
     response = requests.get(f['file_path'])
+
+    # [★ 핵심 수정] 한글 파일명을 URL 인코딩 처리
+    # '한글파일.pdf' -> '%ED%95%9C%EA%B8%80...'
+    encoded_name = urllib.parse.quote(f["origin_name"])
+
     return Response(
         response.content,
         headers={
-            'Content-Disposition': f'attachment; filename="{f["origin_name"]}"',
-            'Content-Type': response.headers['Content-Type']
+            # filename* 형식을 써야 브라우저에서 한글이 안 깨지고 에러도 안 나!
+            'Content-Disposition': f"attachment; filename={encoded_name}; filename*=UTF-8''{encoded_name}",
+            'Content-Type': response.headers.get('Content-Type', 'application/octet-stream')
         }
     )
 

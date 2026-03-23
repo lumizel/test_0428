@@ -10,13 +10,14 @@
     :root {
         --primary-teal: #20828A;
         --light-gray: #f8f9fa;
-        --notice-orange: #fd8a69; /* 공지사항 포인트 컬러 */
+        --notice-orange: #fd8a69;
     }
 
-    /* 1. 제목 입력창 커스텀 (Focus 효과 포함) */
+    /* 1. 제목 입력창 커스텀 */
     .custom-form-control {
-        font-size: 1.1rem !important; /* 제목 글씨 크기 */
+        font-size: 1.1rem !important;
         border-radius: 12px !important;
+        border: 2px solid #dee2e6 !important;
     }
     .custom-form-control:focus {
         border-color: var(--primary-teal) !important;
@@ -24,7 +25,7 @@
         background-color: #fff !important;
     }
 
-    /* 2. 서머노트 에디터 외관 (제목창과 통일) */
+    /* 2. 서머노트 에디터 외관 커스텀 */
     .note-editor.note-frame {
         border: 2px solid #dee2e6 !important;
         border-radius: 12px !important;
@@ -33,7 +34,7 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
     }
 
-    /* 에디터 포커스 시 테두리 색상 (제목창과 통일) */
+    /* 에디터 포커스 시 테두리 색상 */
     .note-editor.note-frame.focus {
         border-color: var(--primary-teal) !important;
         box-shadow: 0 0 0 0.2rem rgba(32, 130, 138, 0.1) !important;
@@ -56,37 +57,40 @@
         color: var(--primary-teal) !important;
     }
 
-    /* 4. ★ 글쓰기 영역 (제목과 글씨 크기 1.1rem으로 일치) ★ */
+    /* 4. 글쓰기 영역 스타일 */
     .note-editable {
         background-color: #ffffff !important;
         color: #212529 !important;
         line-height: 1.6 !important;
-        padding: 25px !important; /* 여백을 조금 더 시원하게 */
-        min-height: 300px;
+        padding: 25px !important;
+        min-height: 450px;
+        font-size: 1.1rem;
     }
 
     /* 5. 공지사항 스위치 커스텀 */
-    .custom-switch:checked {
+    .form-check-input.custom-switch:checked {
         background-color: var(--notice-orange) !important;
         border-color: var(--notice-orange) !important;
     }
-    .custom-switch:focus {
+    .form-check-input.custom-switch:focus {
         border-color: var(--notice-orange);
         box-shadow: 0 0 0 0.25rem rgba(253, 138, 105, 0.25) !important;
     }
 
-    /* 6. 기타 UI 정리 */
+    /* 6. 하단 바 및 리사이즈 바 숨기기 (깔끔하게) */
+    .note-statusbar, .note-resizebar {
+        display: none !important;
+    }
+
+    /* 등록 버튼 비활성화 스타일 */
     .btn-primary:disabled {
         background-color: #a0c4c7 !important;
         border-color: #a0c4c7 !important;
         cursor: not-allowed;
     }
-    .note-statusbar, .note-resizebar {
-        display: none !important; /* 하단바 제거로 깔끔하게 */
-    }
 </style>
 
-<div class="container pt-4 mb-4" style="max-width: 900px;">
+<div class="container pt-4 mb-5" style="max-width: 900px;">
     {% if not session.get('user_id') %}
     <script>
         alert("로그인이 필요한 서비스입니다.");
@@ -101,7 +105,7 @@
                 <i class="bi bi-pencil-fill fs-3 me-3" style="color: var(--primary-teal);"></i>
                 <div>
                     <h4 class="fw-bold mb-1">새로운 이야기 기록하기</h4>
-                    <p class="text-muted small mb-0">타인을 존중하는 마음으로 따뜻한 대화를 나눠주세요.</p>
+                    <p class="text-muted small mb-0">글자색, 배경색, 크기 등을 자유롭게 조절하여 나만의 글을 작성해보세요.</p>
                 </div>
             </div>
 
@@ -121,8 +125,7 @@
                     {% endif %}
                 </div>
                 <input type="text" id="postTitle" name="title"
-                       class="form-control border-2 bg-white custom-form-control py-3"
-                       style="border-radius: 12px; border-color: #dee2e6; font-size: 1.1rem;"
+                       class="form-control bg-white custom-form-control py-3"
                        placeholder="제목을 입력하세요" required maxlength="100">
             </div>
 
@@ -152,7 +155,8 @@
                 </button>
             </div>
 
-        </div> </form>
+        </div>
+    </form>
     {% endif %}
 </div>
 
@@ -162,24 +166,24 @@
         const $titleInput = $('#postTitle');
         const $submitBtn = $('#submitBtn');
 
-        // 1. Summernote 초기화
+        // 1. Summernote 초기화 (형이 원하는 꾸미기 기능 풀세트)
         $summernote.summernote({
-            placeholder: '도로 위 위험 상황이나 공유하고 싶은 내용을 적어주세요.',
+            placeholder: '글씨 색상, 배경색, 크기 등을 자유롭게 변경하여 글을 작성해 보세요!',
             height: 450,
             lang: 'ko-KR',
-            // [✅ 핵심 수정] 툴바 구성을 더 풍성하게 변경
+            // 툴바에 글자색(forecolor), 배경색(backcolor), 글자크기(fontsize) 명시
             toolbar: [
-                ['fontname', ['fontname']], // 글꼴 설정
-                ['fontsize', ['fontsize']], // 글자 크기 설정
-                ['style', ['bold', 'italic', 'underline', 'strikethrough', 'clear']], // 글자 스타일
-                ['color', ['forecolor', 'backcolor']], // 글자색 및 배경색 (형이 원한 것!)
-                ['para', ['ul', 'ol', 'paragraph']], // 문단 정렬
-                ['insert', ['link', 'picture', 'video', 'hr']], // 삽입 도구
-                ['view', ['codeview', 'help']] // 코드보기
+                ['fontname', ['fontname']],
+                ['fontsize', ['fontsize']],
+                ['style', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+                ['color', ['forecolor', 'backcolor']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['insert', ['link', 'picture', 'video', 'hr']],
+                ['view', ['fullscreen', 'codeview', 'help']]
             ],
-            // 사용할 글꼴 목록 추가
-            fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '궁서', '굴림체', '굴림', '돋움체', '바탕체'],
-            // 사용할 글자 크기 목록 추가
+            // 폰트 목록 및 크기 설정
+            fontNames: ['맑은 고딕', '궁서', '굴림체', '굴림', '돋움체', '바탕체', 'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New'],
+            fontNamesIgnoreCheck: ['맑은 고딕', '궁서', '굴림체', '굴림', '돋움체', '바탕체'],
             fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '22', '24', '28', '30', '36', '50', '72'],
 
             callbacks: {
@@ -194,32 +198,26 @@
             }
         });
 
-        // 제목 입력 시 버튼 활성화 체크
-        $titleInput.on('input', function() {
-            checkFormValidity();
-        });
-
-        // 폼 유효성 검사 (제목 & 본문 채워졌는지)
+        // 제목 및 본문 입력 체크 (등록 버튼 활성화/비활성화)
         function checkFormValidity() {
             const titleValue = $titleInput.val().trim();
             const isEmpty = $summernote.summernote('isEmpty');
+            $submitBtn.prop('disabled', !(titleValue.length > 0 && !isEmpty));
+        }
 
-            if (titleValue.length > 0 && !isEmpty) {
-                $submitBtn.prop('disabled', false);
-            } else {
-                $submitBtn.prop('disabled', true);
-            }
+        $titleInput.on('input', checkFormValidity);
+
+        // 이미지 업로드 서버 통신 (기존 로직 유지)
+        function uploadImage(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            fetch('/board/upload/image', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.url) $summernote.summernote('insertImage', data.url);
+            })
+            .catch(err => alert("이미지 업로드에 실패했습니다."));
         }
     });
-
-    // 이미지 업로드 로직 (기존 서버 연동 유지)
-    function uploadImage(file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        fetch('/board/upload/image', { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(data => $('#summernote').summernote('insertImage', data.url))
-        .catch(err => alert("이미지 업로드 실패"));
-    }
 </script>
 {% endblock %}
