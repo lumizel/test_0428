@@ -1,12 +1,12 @@
 from functools import wraps
-from flask import session, redirect, url_for, flash, abort
+from flask import session, request, redirect, url_for, flash, abort
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash('로그인이 필요한 서비스입니다.')
-            return redirect(url_for('auth.login')) # bp이름.함수명
+            # [수정] 로그인 후 돌아올 주소(next)를 쿼리 스트링으로 전달
+            return redirect(url_for('auth.login', next=request.path))
         return f(*args, **kwargs)
     return decorated_function
 

@@ -12,8 +12,8 @@
                         <h3 class="fw-bold text-dark">Welcome Back</h3>
                         <p class="text-muted small">도(道)서관 서비스에 로그인하세요</p>
                     </div>
-                    <form action="/auth/login" method="POST">
 
+                    <form action="/auth/login" method="POST">
                         <div class="form-floating mb-3">
                             <input type="text" name="uid" class="form-control border-2" id="floatingInput"
                                    placeholder="ID" required style="border-radius: 12px; border-color: #dee2e6;">
@@ -31,6 +31,7 @@
                             로그인
                         </button>
                     </form>
+
                     <div class="mt-4 text-center">
                         <span class="text-muted small"><br>계정이 없으신가요?</span>
                         <a href="/auth/signup" class="text-decoration-none ms-1 fw-bold" style="color: #20828A;">회원가입</a>
@@ -50,4 +51,24 @@
         </div>
     </div>
 </div>
+<script>
+    // 페이지 로드 즉시 실행
+    (function() {
+        // 1. URL의 쿼리 스트링(?next=...)을 분석합니다.
+        const urlParams = new URLSearchParams(window.location.search);
+        const nextParam = urlParams.get('next');
+
+        // 2. 이전 페이지(referrer) 정보도 가져옵니다.
+        const ref = document.referrer;
+
+        // 3. 조건 검사 (next 파라미터에 model이 있거나, 이전 주소에 model이 있는 경우)
+        // 두 조건 중 하나라도 걸리면 즉시 실행됩니다.
+        if (
+            (nextParam && nextParam.includes('model')) ||
+            (ref && ref.includes('model'))
+        ) {
+            alert("로그인 후 이용 가능합니다. 🫡");
+        }
+    })();
+</script>
 {% endblock %}
