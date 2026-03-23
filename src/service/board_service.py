@@ -264,7 +264,7 @@ def board_view(board_id):
                            user_disliked=user_disliked,
                            comments=root_comments)
 
-
+# 파일 다운로드
 @board_bp.route('/download/<int:file_id>')
 def download_file(file_id):
     f = fetch_query("SELECT * FROM files WHERE id = %s", (file_id,), one=True)

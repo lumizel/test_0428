@@ -59,7 +59,6 @@
     /* 4. ★ 글쓰기 영역 (제목과 글씨 크기 1.1rem으로 일치) ★ */
     .note-editable {
         background-color: #ffffff !important;
-        font-size: 1.1rem !important; /* 제목 입력창과 동일하게 수정 */
         color: #212529 !important;
         line-height: 1.6 !important;
         padding: 25px !important; /* 여백을 조금 더 시원하게 */
@@ -168,15 +167,22 @@
             placeholder: '도로 위 위험 상황이나 공유하고 싶은 내용을 적어주세요.',
             height: 450,
             lang: 'ko-KR',
+            // [✅ 핵심 수정] 툴바 구성을 더 풍성하게 변경
             toolbar: [
-                ['font', ['bold', 'underline', 'clear']],
-                ['color', ['color']],
-                ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['link', 'picture', 'video']],
-                ['view', ['codeview']]
+                ['fontname', ['fontname']], // 글꼴 설정
+                ['fontsize', ['fontsize']], // 글자 크기 설정
+                ['style', ['bold', 'italic', 'underline', 'strikethrough', 'clear']], // 글자 스타일
+                ['color', ['forecolor', 'backcolor']], // 글자색 및 배경색 (형이 원한 것!)
+                ['para', ['ul', 'ol', 'paragraph']], // 문단 정렬
+                ['insert', ['link', 'picture', 'video', 'hr']], // 삽입 도구
+                ['view', ['codeview', 'help']] // 코드보기
             ],
+            // 사용할 글꼴 목록 추가
+            fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', '맑은 고딕', '궁서', '굴림체', '굴림', '돋움체', '바탕체'],
+            // 사용할 글자 크기 목록 추가
+            fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '22', '24', '28', '30', '36', '50', '72'],
+
             callbacks: {
-                // [기능] 내용이 바뀔 때마다 버튼 활성화 체크
                 onChange: function(contents, $editable) {
                     checkFormValidity();
                 },
@@ -188,17 +194,17 @@
             }
         });
 
-        // [기능] 제목 입력 시마다 버튼 활성화 체크
+        // 제목 입력 시 버튼 활성화 체크
         $titleInput.on('input', function() {
             checkFormValidity();
         });
 
-        // [로직] 제목과 본문이 비어있지 않은지 검사
+        // 폼 유효성 검사 (제목 & 본문 채워졌는지)
         function checkFormValidity() {
             const titleValue = $titleInput.val().trim();
-            const contentValue = $summernote.summernote('isEmpty') ? "" : $summernote.val().trim();
+            const isEmpty = $summernote.summernote('isEmpty');
 
-            if (titleValue.length > 0 && contentValue.length > 0) {
+            if (titleValue.length > 0 && !isEmpty) {
                 $submitBtn.prop('disabled', false);
             } else {
                 $submitBtn.prop('disabled', true);
@@ -206,7 +212,7 @@
         }
     });
 
-    // 이미지 업로드 (기존 fetch 로직 유지)
+    // 이미지 업로드 로직 (기존 서버 연동 유지)
     function uploadImage(file) {
         const formData = new FormData();
         formData.append("file", file);
