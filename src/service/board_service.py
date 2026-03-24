@@ -446,6 +446,53 @@ def add_comment(board_id):
 
     return jsonify({'success': True})
 
+# [수정 메서드] - fetch_query로 변경
+@board_bp.route('/comment/edit/<int:comment_id>', methods=['POST'])
+def edit_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    data = request.get_json()
+    new_content = data.get('content')
+
+    # 1. 본인 확인 (fetch_query 사용!)
+    check_sql = "SELECT member_id FROM board_comments WHERE id = %s"
+    comment = fetch_query(check_sql, (comment_id,), one=True) # 한 개만 가져오기
+
+    if not comment or comment['member_id'] != session['user_id']:
+        return jsonify({'success': False, 'message': '수정 권한이 없습니다.'})
+
+    # 2. DB 업데이트 (수정은 execute_query 사용)
+    update_sql = "UPDATE board_comments SET content = %s WHERE id = %s"
+    try:
+        execute_query(update_sql, (new_content, comment_id))
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"수정 에러: {e}")
+        return jsonify({'success': False, 'message': 'DB 수정 중 오류 발생'}), 500
+
+# [삭제 메서드] - fetch_query로 변경
+@board_bp.route('/comment/delete/<int:comment_id>', methods=['POST'])
+def delete_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    # 1. 본인 확인 (fetch_query 사용!)
+    check_sql = "SELECT member_id FROM board_comments WHERE id = %s"
+    comment = fetch_query(check_sql, (comment_id,), one=True)
+
+    if not comment or comment['member_id'] != session['user_id']:
+        return jsonify({'success': False, 'message': '삭제 권한이 없습니다.'})
+
+    # 2. DB 삭제
+    delete_sql = "DELETE FROM board_comments WHERE id = %s"
+    try:
+        execute_query(delete_sql, (comment_id,))
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"삭제 에러: {e}")
+        return jsonify({'success': False, 'message': 'DB 삭제 중 오류 발생'}), 500
+
 # 사진 업로드
 @board_bp.route('/upload/image', methods = ['POST'])
 def upload_image():

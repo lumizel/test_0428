@@ -94,6 +94,12 @@
     .table tr.pinned-row:hover {
         background-color: rgba(184, 229, 224, 0.8) !important;
     }
+
+    /* 댓글 색상 지정 */
+    .text-custom-teal {
+    color: #20828a !important;
+    font-weight: 600; /* 숫자를 조금 더 선명하게 보이게 함 */
+    }
 </style>
 
 <div class="container py-5">
@@ -154,7 +160,7 @@
                         <th style="width: 15%;">작성자</th>
                         <th style="width: 10%;">작성일</th>
                         <th style="width: 10%;">좋아요</th>
-                        <th style="width: 10%;">댓글수</th>
+                        <th style="width: 10%;">조회수</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -184,7 +190,12 @@
                                     <span class="ms-1 text-muted" title="첨부파일 있음">
                                         <i class="bi bi-paperclip" style="transform: rotate(45deg); display: inline-block;"></i>
                                     </span>
-                                {% endif %}
+                                    {% endif %}
+
+                                    {# 댓글 수 표시 추가 #}
+                                    {% if board.comment_count > 0 %}
+                                        <span class="ms-1 small text-custom-teal">[{{ board.comment_count }}]</span>
+                                    {% endif %}
                                 </span>
                             </div>
                         </td>
@@ -192,7 +203,7 @@
                         <td class="text-muted small">{{ board.created_at.strftime('%Y-%m-%d') if board.created_at }}</td>
                         <td style="color: #e03131; font-size: 0.9rem;">❤️ {{ board.like_count or 0 }}</td>
                         <td style="color: var(--primary-teal); font-size: 0.9rem;">
-                            💬 {{ board.comment_count or 0 }}
+                            {{ board.visits or 0 }}
                         </td>
                     </tr>
                     {% endfor %}
