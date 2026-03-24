@@ -22,7 +22,8 @@ from src.service import (
     admin_bp,
     faq_bp,
     tip_bp,
-    model_bp
+    model_bp,
+    profile_bp
     # 여기 아래에 계속 추가하기
 )
 # FIXME end
@@ -59,6 +60,7 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(faq_bp, url_prefix='/faq')
 app.register_blueprint(tip_bp, url_prefix='/tip')
 app.register_blueprint(model_bp, url_prefix='/model')
+app.register_blueprint(profile_bp, url_prefix='/profile')
 # FIXME end
 
 

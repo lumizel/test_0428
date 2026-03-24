@@ -11,6 +11,7 @@ from src.common import Session, login_required
 from src.common.db import fetch_query, execute_query
 from src.domain import Board
 from src.common.storage import upload_file, get_file_info
+from src.service import profile_service
 from bleach.css_sanitizer import CSSSanitizer
 
 
@@ -109,6 +110,7 @@ def board_write():
 @board_bp.route('/list', methods=['GET', 'POST'])
 def board_list():
     # 1. 파라미터 수신
+    viewer_id = session.get('user_id')  # 세션에서 내 ID 가져오기
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     show_pinned = request.args.get('show_pinned', 'on')
@@ -119,10 +121,18 @@ def board_list():
 
     # 2. WHERE 절 구성
     where_clauses = ["b.active = 1"] if session.get('user_role') != 'admin' else ["1=1"]
+    query_args = []  # 인자를 담을 리스트 생성
+
+    # [추가] 차단한 사용자 필터링: 로그인 상태일 때만 작동
+    if viewer_id:
+        # 내가 차단한 유저(blocked_id)의 글은 가져오지 않음
+        where_clauses.append("b.member_id NOT IN (SELECT blocked_id FROM blocks WHERE blocker_id = %s)")
+        # query_args의 맨 처음에 viewer_id를 넣어야 하므로 아래에서 처리
+        query_args.append(viewer_id)  # 쿼리문의 첫 번째 %s에 대응
+
     if show_pinned != 'on':
         where_clauses.append("b.is_pinned = 0")
 
-    query_args = []
     if search:
         if search_type == 'title':
             where_clauses.append("b.title LIKE %s")
@@ -220,25 +230,43 @@ def board_view(board_id):
                        one=True):
             user_disliked = True
 
-    # 4. 댓글 및 대댓글 목록 가져오기 (기존 팀원 코드 유지)
-    comment_sql = """
-                SELECT c.*, m.name as writer_name, m.nickname as writer_nickname, m.uid as writer_uid
+        # 4. 댓글 및 대댓글 목록 가져오기 (차단 여부 확인 로직 추가)
+        viewer_id = session.get('user_id')
+
+        if viewer_id:
+            # 로그인한 경우: 내가 차단한 유저인지(is_blocked) 확인하는 서브쿼리 추가
+            comment_sql = """
+                SELECT c.*, m.name as writer_name, m.nickname as writer_nickname, m.uid as writer_uid,
+                       (SELECT COUNT(*) FROM blocks WHERE blocker_id = %s AND blocked_id = c.member_id) as is_blocked
                 FROM board_comments c
                 JOIN members m ON c.member_id = m.id
                 WHERE c.board_id = %s
                 ORDER BY c.created_at ASC
             """
-    all_comments = fetch_query(comment_sql, (board_id,))
-
-    comment_dict = {c['id']: {**c, 'children': []} for c in all_comments}
-    root_comments = []
-
-    for c_id, c_data in comment_dict.items():
-        parent_id = c_data['parent_id']
-        if parent_id and parent_id in comment_dict:
-            comment_dict[parent_id]['children'].append(c_data)
+            all_comments = fetch_query(comment_sql, (viewer_id, board_id))
         else:
-            root_comments.append(c_data)
+            # 비로그인 경우: 차단 여부를 확인할 필요가 없으므로 무조건 0으로 설정
+            comment_sql = """
+                SELECT c.*, m.name as writer_name, m.nickname as writer_nickname, m.uid as writer_uid,
+                       0 as is_blocked
+                FROM board_comments c
+                JOIN members m ON c.member_id = m.id
+                WHERE c.board_id = %s
+                ORDER BY c.created_at ASC
+            """
+            all_comments = fetch_query(comment_sql, (board_id,))
+
+        # 아래 데이터 가공 로직은 기존과 동일 (is_blocked 값이 포함된 채로 딕셔너리에 담김)
+        comment_dict = {c['id']: {**c, 'children': []} for c in all_comments}
+        root_comments = []
+
+        for c_id, c_data in comment_dict.items():
+            # 여기서 c_data 안에 'is_blocked'가 들어있으므로 HTML에서 쓸 수 있게 됨
+            parent_id = c_data['parent_id']
+            if parent_id and parent_id in comment_dict:
+                comment_dict[parent_id]['children'].append(c_data)
+            else:
+                root_comments.append(c_data)
 
     # 5. Board 객체 생성 및 데이터 주입
     board = Board.from_db(row)
@@ -472,27 +500,28 @@ def edit_comment(comment_id):
         print(f"수정 에러: {e}")
         return jsonify({'success': False, 'message': 'DB 수정 중 오류 발생'}), 500
 
-# [삭제 메서드] - fetch_query로 변경
+# 댓글 삭제 메서드
 @board_bp.route('/comment/delete/<int:comment_id>', methods=['POST'])
 def delete_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
 
-    # 1. 본인 확인 (fetch_query 사용!)
+    # 1. 본인 확인 (fetch_query 사용)
     check_sql = "SELECT member_id FROM board_comments WHERE id = %s"
     comment = fetch_query(check_sql, (comment_id,), one=True)
 
     if not comment or comment['member_id'] != session['user_id']:
         return jsonify({'success': False, 'message': '삭제 권한이 없습니다.'})
 
-    # 2. DB 삭제
-    delete_sql = "DELETE FROM board_comments WHERE id = %s"
+    # 2. 진짜 삭제(DELETE) 대신 내용만 업데이트! (active 컬럼 없이)
+    delete_sql = "UPDATE board_comments SET content = '삭제된 댓글입니다.' WHERE id = %s"
+
     try:
         execute_query(delete_sql, (comment_id,))
         return jsonify({'success': True})
     except Exception as e:
         print(f"삭제 에러: {e}")
-        return jsonify({'success': False, 'message': 'DB 삭제 중 오류 발생'}), 500
+        return jsonify({'success': False, 'message': '삭제 처리 중 오류 발생'}), 500
 
 # 사진 업로드
 @board_bp.route('/upload/image', methods = ['POST'])
@@ -631,3 +660,27 @@ def cleanup_old_trash():
     except Exception as e:
         print(f"자동 삭제 중 오류 발생: {e}")
 
+# 작성자 프로필 조회
+@board_bp.route('/profile/<int:member_id>')
+def user_profile(member_id):
+    viewer_id = session.get('user_id')
+    # 서비스 호출하여 데이터 뭉치 가져오기
+    data = profile_service.get_user_profile_data(member_id, viewer_id)
+
+    if not data:
+        return "<script>alert('존재하지 않는 사용자입니다.'); history.back();</script>"
+
+    return render_template('board/profile.html', **data)
+
+# 팔로우
+@board_bp.route('/follow/<int:following_id>', methods=['POST'])
+def follow_toggle(following_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    success, result = profile_service.toggle_follow(session['user_id'], following_id)
+
+    if success:
+        return jsonify({'success': True, 'is_following': result})
+    else:
+        return jsonify({'success': False, 'message': result})
