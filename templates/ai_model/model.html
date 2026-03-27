@@ -82,13 +82,15 @@
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="video-box-main shadow-sm" id="streamContainer">
-                <img id="videoStream" src="">
+                <img id="videoStream" src="" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
+
+                <video id="videoPlayer" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" autoplay loop muted playsinline></video>
+
                 <canvas id="overlayCanvas"></canvas>
 
                 <div id="placeholderUI" class="text-center">
                     <i class="bi bi-camera-video text-muted" style="font-size: 3rem;"></i>
                     <p class="mt-3 text-muted">미리보기 영역</p>
-                    <small class="text-secondary">파일을 첨부한 뒤 분석 시작 버튼을 눌러주세요.</small>
                 </div>
             </div>
 
@@ -159,21 +161,35 @@
     const placeholderUI = document.getElementById('placeholderUI');
     const drawCtx = overlayCanvas.getContext('2d');
 
-    // 2. 파일 선택 시 미리보기 처리
-    fileInput.onchange = function() {
-        if(this.files.length > 0) {
-            startBtn.classList.replace('btn-outline-secondary', 'btn-teal');
-            startBtn.disabled = false;
-            statusText.innerText = "분석 준비 완료: " + this.files[0].name;
+ // 2. 파일 선택 시 미리보기 처리 (이미지/영상 자동 판별)
+fileInput.onchange = function() {
+    if(this.files.length > 0) {
+        const file = this.files[0];
+        const fileURL = URL.createObjectURL(file);
+        const isVideo = file.type.startsWith('video/'); // 파일이 영상인지 확인
 
-            videoStream.src = URL.createObjectURL(this.files[0]);
+        startBtn.classList.replace('btn-outline-secondary', 'btn-teal');
+        startBtn.disabled = false;
+        statusText.innerText = "분석 준비 완료: " + file.name;
+        placeholderUI.style.display = 'none';
+
+        if (isVideo) {
+            // 영상인 경우: 비디오 태그 보여주고 이미지 숨김
+            videoStream.style.display = 'none';
+            videoPlayer.style.display = 'block';
+            videoPlayer.src = fileURL;
+            videoPlayer.play(); // 자동 재생 시작
+        } else {
+            // 이미지인 경우: 이미지 태그 보여주고 비디오 숨김
+            videoPlayer.style.display = 'none';
             videoStream.style.display = 'block';
-            placeholderUI.style.display = 'none';
-
-            // 새 파일 선택 시 이전 캔버스 기록 삭제
-            drawCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            videoStream.src = fileURL;
         }
-    };
+
+        // 새 파일 선택 시 이전 캔버스 기록 삭제
+        drawCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    }
+};
 
     // 3. 서버 분석 연결 및 바운딩 박스 그리기
     document.getElementById('uploadForm').onsubmit = async function(e) {
