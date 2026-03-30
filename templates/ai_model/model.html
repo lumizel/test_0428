@@ -89,9 +89,12 @@
                         분석 및 재생 시작
                     </button>
 
-                    <button type="button" id="saveCloudBtn" class="btn btn-outline-info w-100 py-2 mt-2" disabled style="font-weight: 600;">
-                        <i class="bi bi-cloud-upload me-2"></i> 분석 결과 클라우드 저장
-                    </button>
+                <button type="button" id="saveCloudBtn" class="btn w-100 py-2 mt-2" disabled
+                        style="font-weight: 600; color: #20828A; border: 2px solid #20828A; transition: 0.3s;"
+                        onmouseover="this.style.backgroundColor='#20828A'; this.style.color='white';"
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.color='#20828A';">
+                    <i class="bi bi-cloud-upload me-2"></i> 분석 결과 클라우드 저장
+                </button>
                 </form>
                 <div class="mt-4">
                     <h3 class="h6 fw-bold border-bottom pb-2 mb-3">탐지된 객체 리스트</h3>
@@ -144,8 +147,6 @@
     const videoPlayer = document.getElementById('videoPlayer');
     const overlayCanvas = document.getElementById('overlayCanvas');
     const drawCtx = overlayCanvas.getContext('2d');
-
-    // [추가] 저장 버튼 객체 가져오기
     const saveCloudBtn = document.getElementById('saveCloudBtn');
 
     let analysisLoop = null;
@@ -156,7 +157,6 @@
     fileInput.onchange = function() {
         if(this.files && this.files.length > 0) {
             currentFile = this.files[0];
-
             stopAnalysis();
             resetData();
             const fileURL = URL.createObjectURL(currentFile);
@@ -164,8 +164,6 @@
 
             startBtn.classList.replace('btn-outline-secondary', 'btn-teal');
             startBtn.disabled = false;
-
-            // 새 파일 선택 시 저장 버튼은 다시 비활성화
             if(saveCloudBtn) saveCloudBtn.disabled = true;
 
             statusText.innerText = "준비 완료: " + currentFile.name;
@@ -201,20 +199,13 @@
             videoPlayer.play();
             playIcon.className = 'bi bi-pause-circle-fill';
             playBtn.style.display = 'block';
-            setTimeout(() => {
-                if (!videoPlayer.paused) playBtn.style.display = 'none';
-            }, 500);
-
+            setTimeout(() => { if (!videoPlayer.paused) playBtn.style.display = 'none'; }, 500);
             if (isAnalysisActive) startAnalysis();
         } else {
             videoPlayer.pause();
             playIcon.className = 'bi bi-play-circle-fill';
             playBtn.style.display = 'block';
-
-            if (analysisLoop) {
-                clearInterval(analysisLoop);
-                analysisLoop = null;
-            }
+            if (analysisLoop) { clearInterval(analysisLoop); analysisLoop = null; }
         }
     }
 
@@ -244,7 +235,7 @@
 
         resetData();
         isAnalysisActive = true;
-        if(saveCloudBtn) saveCloudBtn.disabled = true; // 분석 중엔 버튼 잠금
+        if(saveCloudBtn) saveCloudBtn.disabled = true;
 
         progressBar.style.transition = 'none';
         progressBar.style.width = "0%";
@@ -258,7 +249,6 @@
             progressBar.style.transition = 'width 2.0s ease-out';
             progressBar.style.width = "85%";
             progressBar.classList.add('progress-bar-animated');
-
             statusText.innerText = "분석 진행 중...";
 
             if (file.type.startsWith('video/')) {
@@ -271,7 +261,6 @@
                 progressBar.style.width = "100%";
                 statusText.innerText = "분석 완료!";
                 progressBar.classList.remove('progress-bar-animated');
-                // 이미지 분석 완료 시 저장 버튼 활성화
                 if(saveCloudBtn) saveCloudBtn.disabled = false;
             }
         }, 10);
@@ -284,7 +273,6 @@
             progressBar.style.width = "100%";
             statusText.innerText = "분석 완료!";
             progressBar.classList.remove('progress-bar-animated');
-            // 비디오 분석 완료 시 저장 버튼 활성화
             if(saveCloudBtn) saveCloudBtn.disabled = false;
         } else {
             playBtn.style.display = 'block';
@@ -311,36 +299,25 @@
                         accumulateData(result);
                         drawBoundingBoxes(result.detections);
                     }
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    resolve();
-                }
+                } catch (err) { console.error(err); } finally { resolve(); }
             }, 'image/jpeg', 0.7);
         });
     }
 
     function accumulateData(result) {
-        result.counts.forEach((count, idx) => {
-            totalCounts[idx] += count;
-        });
+        result.counts.forEach((count, idx) => { totalCounts[idx] += count; });
         if (statChart) {
             statChart.data.datasets[0].data = totalCounts;
             statChart.update();
         }
-
         const validDetections = result.detections.filter(d => parseFloat(d.conf) > 0.4);
         if (validDetections.length > 0) {
             const listContainer = document.getElementById('detectionList');
             if (listContainer.querySelector('p.text-muted')) listContainer.innerHTML = '';
-
             validDetections.forEach(d => {
                 const item = document.createElement('div');
                 item.className = "d-flex justify-content-between border-bottom py-1 small";
-                item.innerHTML = `
-                    <span class="text-primary fw-bold">${d.label}</span>
-                    <span class="text-muted">${d.conf} (탐지됨)</span>
-                `;
+                item.innerHTML = `<span class="text-primary fw-bold">${d.label}</span><span class="text-muted">${d.conf} (탐지됨)</span>`;
                 listContainer.insertBefore(item, listContainer.firstChild);
             });
         }
@@ -354,7 +331,6 @@
         const mediaHeight = media.clientHeight;
         const nativeWidth = media.tagName === 'VIDEO' ? media.videoWidth : media.naturalWidth;
         const nativeHeight = media.tagName === 'VIDEO' ? media.videoHeight : media.naturalHeight;
-
         const mediaRatio = nativeWidth / nativeHeight;
         const containerRatio = mediaWidth / mediaHeight;
 
@@ -373,7 +349,6 @@
         overlayCanvas.style.top = media.offsetTop + (mediaHeight - displayHeight) / 2 + 'px';
 
         drawCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
         detections.forEach(det => {
             if (!det.bbox || parseFloat(det.conf) < 0.4) return;
             const [x1, y1, x2, y2] = det.bbox;
@@ -385,17 +360,14 @@
             drawCtx.strokeStyle = "#007BFF";
             drawCtx.lineWidth = 3;
             drawCtx.strokeRect(startX, startY, width, height);
-
             drawCtx.fillStyle = "#007BFF";
             drawCtx.font = "bold 14px Pretendard";
             const label = `${det.label} ${det.conf}`;
             const textWidth = drawCtx.measureText(label).width;
-
             const labelBgWidth = textWidth + 10;
             const labelBgHeight = 20;
             const labelY = startY - labelBgHeight < 0 ? startY : startY - labelBgHeight;
             drawCtx.fillRect(startX, labelY, labelBgWidth, labelBgHeight);
-
             drawCtx.fillStyle = "white";
             drawCtx.fillText(label, startX + 5, labelY + 15);
         });
@@ -403,74 +375,67 @@
 
     window.addEventListener('resize', () => { if (lastResult) drawBoundingBoxes(lastResult); });
 
- // [추가] 클라우드 저장 실행 로직 (버튼 색상 스타일링 포함)
+    // [최종 수정] 클라우드 저장 실행 로직 (디자인 유지 및 영상/사진 구분)
     if(saveCloudBtn) {
-        // [수정] 형님이 요청하신 #20828A 색상을 버튼 스타일로 직접 지정합니다.
-        const customColor = '#20828A';
-        saveCloudBtn.style.color = customColor;
-        saveCloudBtn.style.borderColor = customColor;
+        saveCloudBtn.onclick = async function() {
+            if(!currentFile) return;
 
-        // 마우스 오버(Hover) 시 색상 반전 효과
-        saveCloudBtn.onmouseover = function() {
-            this.style.backgroundColor = customColor;
-            this.style.color = 'white';
-        };
-        saveCloudBtn.onmouseout = function() {
-            this.style.backgroundColor = 'transparent';
-            this.style.color = customColor;
-        };
+            const isVideo = currentFile.type.startsWith('video/');
+            const formData = new FormData();
+            formData.append('original_filename', currentFile.name);
 
-        saveCloudBtn.onclick = function() {
-            const media = videoStream.style.display === 'block' ? videoStream : videoPlayer;
-
-            // 임시 캔버스에 화면 합치기 (원본 + AI 탐지 박스)
-            const tempCanvas = document.createElement('canvas');
-            const nativeWidth = media.tagName === 'VIDEO' ? media.videoWidth : media.naturalWidth;
-            const nativeHeight = media.tagName === 'VIDEO' ? media.videoHeight : media.naturalHeight;
-
-            tempCanvas.width = nativeWidth;
-            tempCanvas.height = nativeHeight;
-            const ctx = tempCanvas.getContext('2d');
-
-            ctx.drawImage(media, 0, 0, tempCanvas.width, tempCanvas.height);
-            ctx.drawImage(overlayCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
-
-            tempCanvas.toBlob(async (blob) => {
-                const formData = new FormData();
+            if (isVideo) {
+                // 영상일 때는 원본 파일 자체를 전송 (서버에서 전체 분석 수행)
+                formData.append('merged_image', currentFile);
+                statusText.innerText = "전체 영상 분석 및 저장 중... 잠시만 기다려 주세요.";
+            } else {
+                // 사진일 때는 기존처럼 캔버스 합본 전송
+                const media = videoStream;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = media.naturalWidth;
+                tempCanvas.height = media.naturalHeight;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(media, 0, 0, tempCanvas.width, tempCanvas.height);
+                ctx.drawImage(overlayCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg', 0.9));
                 formData.append('merged_image', blob, 'result.jpg');
+                statusText.innerText = "결과 이미지 저장 중...";
+            }
 
-                const originalBtnText = saveCloudBtn.innerHTML;
-                saveCloudBtn.disabled = true;
-                saveCloudBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>저장 중...';
-                statusText.innerText = "Cloudinary에 결과 저장 중...";
+            const originalBtnText = saveCloudBtn.innerHTML;
+            saveCloudBtn.disabled = true;
+            saveCloudBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>처리 중...';
 
-                try {
-                    const response = await fetch("{{ url_for('model.save_result') }}", {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const resData = await response.json();
+            try {
+                const response = await fetch("{{ url_for('model.save_result') }}", {
+                    method: 'POST',
+                    body: formData
+                });
+                const resData = await response.json();
 
-                    if (resData.success) {
-                        // 1. 먼저 알림창을 띄웁니다.
-                        alert("클라우드 저장 성공!\n[확인]을 누르면 저장된 이미지가 새 탭에서 열립니다.");
+            if (resData.success) {
+                    alert("성공적으로 저장되었습니다!");
 
-                        // 2. 사용자가 알림창의 [확인]을 누른 후 새 탭이 열립니다.
-                        window.open(resData.url, '_blank');
+                    // [수정] 팝업 차단을 우회하는 가장 확실한 방법
+                    const link = document.createElement('a');
+                    link.href = resData.url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer'; // 보안 및 성능 향상
+                    document.body.appendChild(link);
+                    link.click(); // 가상으로 클릭 발생
+                    document.body.removeChild(link); // 클릭 후 요소 제거
 
-                        // 3. 화면의 상태 텍스트 업데이트
-                        statusText.innerText = "저장 완료! (새 탭 확인)";
-                    } else {
-                        alert("저장 실패: " + resData.message);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert("서버 연결 오류가 발생했습니다.");
-                } finally {
-                    saveCloudBtn.disabled = false;
-                    saveCloudBtn.innerHTML = originalBtnText;
+                    statusText.innerText = "저장 완료! 새 탭을 확인하세요.";
+                } else {
+                    alert("저장 실패: " + resData.message);
                 }
-            }, 'image/jpeg', 0.9);
+            } catch (err) {
+                console.error(err);
+                alert("서버 통신 오류가 발생했습니다.");
+            } finally {
+                saveCloudBtn.disabled = false;
+                saveCloudBtn.innerHTML = originalBtnText;
+            }
         };
     }
 </script>
