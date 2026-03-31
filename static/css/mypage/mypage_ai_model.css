@@ -1,0 +1,63 @@
+    .activity-body {
+        background-color: #F8F9FA; padding: 50px 0; min-height: 80vh;
+        display: flex; flex-direction: column; /* 수직 정렬 구조 설정 */
+    }
+
+    .activity-header-box {
+        max-width: 900px;
+        margin: 0 auto 20px auto;
+        background-color: #008080;
+        color: #FFFFFF;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 55px;
+        padding: 0;
+    }
+    .activity-header-box h2 {
+        font-size: 20px;
+        margin: 0 !important;
+        padding: 0;
+        line-height: 1;
+    }
+
+    /* ✅ 카드 높이를 4개 분량으로 고정 */
+    .activity-card-container {
+        max-width: 900px; margin: 0 auto; border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08); background-color: #FFFFFF;
+        padding-bottom: 30px;
+        height: 650px; display: flex; flex-direction: column; /* 높이 고정 */
+    }
+
+    .ai-result-list { flex: 1; overflow-y: auto; }
+
+    .activity-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 20px 30px; border-bottom: 1px solid #f1f1f1;
+    }
+    .item-title { font-weight: 600; font-size: 16px; color: #333; }
+    .item-date { font-size: 12px; color: #999; }
+    .badge-ai { font-size: 11px; padding: 4px 10px; border-radius: 50px; background-color: #f8f9fa; border: 1px solid #eee; margin-right: 5px; }
+
+    .download-btn {
+        color: #008080; border: 1px solid #008080; width: 40px; height: 40px;
+        border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        text-decoration: none; transition: all 0.2s;
+    }
+    .download-btn:hover { background-color: #008080; color: #fff; }
+
+    .page-link { color: #495057 !important; background-color: #fff !important; border: 1px solid #dee2e6 !important; }
+    .page-item.active .page-link { background-color: #008080 !important; border-color: #008080 !important; color: white !important; }
+
+    /* ✅ 홈으로 돌아가기 영역: 남은 여백을 꽉 채우고 중앙 정렬 */
+    .home-back {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 0;
+    }
+    .home-back a { color: #888; text-decoration: none; font-size: 14px; }
+    .empty-msg { text-align: center; padding: 100px 0; color: #ccc; flex: 1; display: flex; align-items: center; justify-content: center; }

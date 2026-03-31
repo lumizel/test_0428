@@ -1,0 +1,117 @@
+    .info-body {
+        background-color: #F8F9FA;
+        padding: 50px 0;
+        min-height: 80vh;
+    }
+
+    /* 1. 상단 타이틀 박스 (info.html과 동일) */
+    .info-header-box {
+        max-width: 500px;
+        margin: 0 auto 20px auto;
+        background-color: #008080;
+        color: #FFFFFF;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .info-header-box h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: 1px;
+    }
+
+    /* 2. 메인 카드 설정 */
+    .info-card-container {
+        max-width: 500px;
+        margin: 0 auto;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        background-color: #FFFFFF;
+        overflow: hidden;
+    }
+
+    .info-card-content {
+        padding: 40px;
+    }
+
+    /* 3. 입력 폼 스타일링 */
+    .form-section {
+        background-color: #F9F9F9;
+        border-radius: 10px;
+        padding: 25px;
+    }
+
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 8px;
+    }
+
+    /* 인풋 박스 디자인 커스텀 */
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #EAEAEA;
+        padding: 10px 15px;
+        font-size: 15px;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: #008080;
+        box-shadow: 0 0 0 0.2rem rgba(0, 128, 128, 0.1);
+    }
+
+    /* 읽기 전용 필드 (아이디) 스타일 */
+    .form-control[readonly] {
+        background-color: #F1F1F1;
+        color: #888;
+        cursor: not-allowed;
+    }
+
+    /* 4. 버튼 그룹 */
+    .btn-group-custom {
+        display: grid;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .btn-submit {
+        background-color: #008080;
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: background-color 0.3s;
+    }
+
+    .btn-submit:hover {
+        background-color: #006666;
+        color: white;
+    }
+
+    .btn-cancel {
+        background-color: #fff;
+        border: 1px solid #CCC;
+        color: #888;
+        padding: 12px;
+        border-radius: 25px;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background-color: #F1F1F1;
+        color: #555;
+    }
+
+    .password-hint {
+        font-size: 12px;
+        margin-top: 5px;
+    }
