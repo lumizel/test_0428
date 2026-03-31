@@ -1,0 +1,105 @@
+:root {
+    --primary-light-teal: rgba(32, 130, 138, 0.08);
+    --notice-orange: #fd8a69;
+}
+
+/* 전체 컨테이너 */
+.view-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border: 1px solid #dee2e6;
+    overflow: hidden;
+    margin-bottom: 50px;
+}
+
+/* 헤더 영역 */
+.view-header {
+    padding: 40px;
+    border-bottom: 1px solid #f1f3f5;
+    border-top: 8px solid var(--primary-teal);
+}
+
+.view-content img { max-width: 100%; height: auto; border-radius: 12px; }
+
+/* 리액션 버튼 */
+.reaction-btn {
+    transition: all 0.2s;
+    border-radius: 50px;
+    padding: 10px 25px;
+    font-weight: bold;
+    border: 2px solid transparent;
+}
+#like-btn { background: #fff5f5; color: #ff4d4d; border-color: #ffe3e3; }
+#like-btn.active { background: #ff4d4d; color: white; border-color: #ff4d4d; }
+#dislike-btn { background: #f8f9fa; color: #6c757d; border-color: #dee2e6; }
+#dislike-btn.active { background: #495057; color: white; border-color: #495057; }
+
+/* 제어 섹션 */
+.control-section { padding: 20px 40px 40px; }
+.hr-style { border-top: 1px solid #dee2e6; opacity: 0.5; margin: 30px 40px; }
+
+/* 댓글 입력창 스타일 (library 명칭 적용) */
+.library-comment-card {
+    background-color: var(--primary-light-teal);
+    border-radius: 15px;
+    border: none;
+}
+.comment-input { border-radius: 10px; border: 1px solid #dee2e6; font-size: 1rem; }
+.comment-input:focus {
+    border-color: var(--primary-teal) !important;
+    box-shadow: 0 0 0 0.2rem rgba(32, 130, 138, 0.1) !important;
+}
+
+/* 등록 버튼 (가로 정렬 보정) */
+.btn-library {
+    background-color: var(--primary-teal);
+    color: white;
+    border-radius: 10px;
+    font-weight: bold;
+    min-width: 85px;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+}
+.btn-library:hover { background-color: #1a6d74; color: white; }
+
+/* 스크랩 버튼 커스텀 스타일 */
+.btn-scrap-custom {
+    color: #20828a;
+    border-color: #20828a;
+    transition: all 0.2s;
+}
+
+.btn-scrap-custom:hover {
+    background-color: #20828a;
+    color: white;
+    border-color: #20828a;
+}
+
+/* 스크랩이 완료된 상태 (활성화) */
+.btn-scrap-custom.active {
+    background-color: #20828a;
+    color: white;
+}
+
+/* view.html의 <style> 섹션에 추가 */
+.view-content {
+    padding: 40px;
+    line-height: 1.8;
+    font-size: 1.1rem;
+    color: #212529;
+    min-height: 300px;
+    word-break: break-all; /* 긴 단어 줄바꿈 */
+}
+
+/* ✅ 이걸로 교체 (Summernote 호환) */
+.view-content p { margin-bottom: 0.5rem; }
+.view-content img { max-width: 100%; height: auto; border-radius: 12px; }
+.view-content table { width: 100%; border-collapse: collapse; }
+.view-content table td, .view-content table th { border: 1px solid #dee2e6; padding: 8px; }
+
+/* 닉네임에 마우스 올렸을 때 색상 변화 */
+.hover-opacity:hover {
+opacity: 0.7;
+transition: 0.2s;
+}

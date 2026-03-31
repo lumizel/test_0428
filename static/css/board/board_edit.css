@@ -1,0 +1,2 @@
+.form-control:focus { border-color: #20828A !important; box-shadow: 0 0 0 0.25rem rgba(32, 130, 138, 0.15) !important; }
+.note-editor.note-frame { border-radius: 0.5rem !important; overflow: hidden; background-color: #fff !important; }

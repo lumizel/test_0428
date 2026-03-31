@@ -1,0 +1,87 @@
+:root {
+    --primary-teal: #20828A;
+    --light-gray: #f8f9fa;
+    --notice-orange: #fd8a69;
+}
+
+/* 1. 제목 입력창 커스텀 */
+.custom-form-control {
+    font-size: 1.1rem !important;
+    border-radius: 12px !important;
+    border: 2px solid #dee2e6 !important;
+}
+.custom-form-control:focus {
+    border-color: var(--primary-teal) !important;
+    box-shadow: 0 0 0 0.2rem rgba(32, 130, 138, 0.1) !important;
+    background-color: #fff !important;
+}
+
+/* 2. 서머노트 에디터 외관 커스텀 */
+.note-editor.note-frame {
+    border: 2px solid #dee2e6 !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    background-color: #fff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+}
+
+/* 에디터 포커스 시 테두리 색상 */
+.note-editor.note-frame.focus {
+    border-color: var(--primary-teal) !important;
+    box-shadow: 0 0 0 0.2rem rgba(32, 130, 138, 0.1) !important;
+}
+
+/* 3. 에디터 툴바 디자인 */
+.note-toolbar {
+    background-color: var(--light-gray) !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    padding: 8px 10px !important;
+}
+.note-btn {
+    border: none !important;
+    background-color: transparent !important;
+    color: #495057 !important;
+    transition: all 0.2s;
+}
+.note-btn:hover {
+    background-color: rgba(32, 130, 138, 0.1) !important;
+    color: var(--primary-teal) !important;
+}
+
+/* 4. 글쓰기 영역 스타일 */
+.note-editable {
+background-color: #ffffff !important;
+color: #212529 !important;
+line-height: 1.6 !important;
+padding: 25px !important;
+min-height: 450px !important;  /* !important 추가 */
+height: 450px !important;      /* height도 추가 */
+font-size: 1.1rem !important;  /* !important 추가 */
+}
+
+/* 5. 공지사항 스위치 커스텀 */
+.form-check-input.custom-switch:checked {
+    background-color: var(--notice-orange) !important;
+    border-color: var(--notice-orange) !important;
+}
+.form-check-input.custom-switch:focus {
+    border-color: var(--notice-orange);
+    box-shadow: 0 0 0 0.25rem rgba(253, 138, 105, 0.25) !important;
+}
+
+/* 6. 하단 바 및 리사이즈 바 숨기기 */
+.note-statusbar, .note-resizebar {
+    display: none !important;
+}
+
+/* 추가 */
+.note-editor.note-frame .note-editing-area {
+    min-height: 450px !important;
+}
+
+/* 등록 버튼 비활성화 스타일 */
+.btn-primary:disabled {
+    background-color: #a0c4c7 !important;
+    border-color: #a0c4c7 !important;
+    cursor: not-allowed;
+}

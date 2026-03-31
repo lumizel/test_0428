@@ -1,94 +1,11 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% block style %}
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/lang/summernote-ko-KR.min.js"></script>
+<link rel="stylesheet" href="/static/css/board/board_write.css">
+{% endblock %}
 
-<style>
-    :root {
-        --primary-teal: #20828A;
-        --light-gray: #f8f9fa;
-        --notice-orange: #fd8a69;
-    }
-
-    /* 1. 제목 입력창 커스텀 */
-    .custom-form-control {
-        font-size: 1.1rem !important;
-        border-radius: 12px !important;
-        border: 2px solid #dee2e6 !important;
-    }
-    .custom-form-control:focus {
-        border-color: var(--primary-teal) !important;
-        box-shadow: 0 0 0 0.2rem rgba(32, 130, 138, 0.1) !important;
-        background-color: #fff !important;
-    }
-
-    /* 2. 서머노트 에디터 외관 커스텀 */
-    .note-editor.note-frame {
-        border: 2px solid #dee2e6 !important;
-        border-radius: 12px !important;
-        overflow: hidden;
-        background-color: #fff !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
-    }
-
-    /* 에디터 포커스 시 테두리 색상 */
-    .note-editor.note-frame.focus {
-        border-color: var(--primary-teal) !important;
-        box-shadow: 0 0 0 0.2rem rgba(32, 130, 138, 0.1) !important;
-    }
-
-    /* 3. 에디터 툴바 디자인 */
-    .note-toolbar {
-        background-color: var(--light-gray) !important;
-        border-bottom: 2px solid #dee2e6 !important;
-        padding: 8px 10px !important;
-    }
-    .note-btn {
-        border: none !important;
-        background-color: transparent !important;
-        color: #495057 !important;
-        transition: all 0.2s;
-    }
-    .note-btn:hover {
-        background-color: rgba(32, 130, 138, 0.1) !important;
-        color: var(--primary-teal) !important;
-    }
-
-    /* 4. 글쓰기 영역 스타일 */
-    .note-editable {
-        background-color: #ffffff !important;
-        color: #212529 !important;
-        line-height: 1.6 !important;
-        padding: 25px !important;
-        min-height: 450px;
-        font-size: 1.1rem;
-    }
-
-    /* 5. 공지사항 스위치 커스텀 */
-    .form-check-input.custom-switch:checked {
-        background-color: var(--notice-orange) !important;
-        border-color: var(--notice-orange) !important;
-    }
-    .form-check-input.custom-switch:focus {
-        border-color: var(--notice-orange);
-        box-shadow: 0 0 0 0.25rem rgba(253, 138, 105, 0.25) !important;
-    }
-
-    /* 6. 하단 바 및 리사이즈 바 숨기기 (깔끔하게) */
-    .note-statusbar, .note-resizebar {
-        display: none !important;
-    }
-
-    /* 등록 버튼 비활성화 스타일 */
-    .btn-primary:disabled {
-        background-color: #a0c4c7 !important;
-        border-color: #a0c4c7 !important;
-        cursor: not-allowed;
-    }
-</style>
+{% block content %}
 
 <div class="container pt-4 mb-5" style="max-width: 900px;">
     {% if not session.get('user_id') %}
@@ -140,7 +57,7 @@
 
             <div class="mb-4">
                 <label class="form-label fw-bold medium text-muted mb-2 ms-1">내용</label>
-                <textarea id="summernote" name="content" required></textarea>
+                <textarea id="summernote" name="content"></textarea>
             </div>
 
             <div class="d-flex align-items-center mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px dashed #dee2e6;">
@@ -169,64 +86,11 @@
     {% endif %}
 </div>
 
-<script>
-    $(document).ready(function() {
-        const $summernote = $('#summernote');
-        const $titleInput = $('#postTitle');
-        const $submitBtn = $('#submitBtn');
+{% endblock %}
 
-        // 1. Summernote 초기화 (형이 원하는 꾸미기 기능 풀세트)
-        $summernote.summernote({
-            placeholder: '글씨 색상, 배경색, 크기 등을 자유롭게 변경하여 글을 작성해 보세요!',
-            height: 450,
-            lang: 'ko-KR',
-            // 툴바에 글자색(forecolor), 배경색(backcolor), 글자크기(fontsize) 명시
-            toolbar: [
-                ['fontname', ['fontname']],
-                ['fontsize', ['fontsize']],
-                ['style', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
-                ['color', ['forecolor', 'backcolor']],
-                ['para', ['ul', 'ol', 'paragraph']],
-                ['insert', ['link', 'picture', 'video', 'hr']],
-                ['view', ['fullscreen', 'codeview', 'help']]
-            ],
-            // 폰트 목록 및 크기 설정
-            fontNames: ['맑은 고딕', '궁서', '굴림체', '굴림', '돋움체', '바탕체', 'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New'],
-            fontNamesIgnoreCheck: ['맑은 고딕', '궁서', '굴림체', '굴림', '돋움체', '바탕체'],
-            fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '22', '24', '28', '30', '36', '50', '72'],
-
-            callbacks: {
-                onChange: function(contents, $editable) {
-                    checkFormValidity();
-                },
-                onImageUpload: function(files) {
-                    for (let i = 0; i < files.length; i++) {
-                        uploadImage(files[i]);
-                    }
-                }
-            }
-        });
-
-        // 제목 및 본문 입력 체크 (등록 버튼 활성화/비활성화)
-        function checkFormValidity() {
-            const titleValue = $titleInput.val().trim();
-            const isEmpty = $summernote.summernote('isEmpty');
-            $submitBtn.prop('disabled', !(titleValue.length > 0 && !isEmpty));
-        }
-
-        $titleInput.on('input', checkFormValidity);
-
-        // 이미지 업로드 서버 통신 (기존 로직 유지)
-        function uploadImage(file) {
-            const formData = new FormData();
-            formData.append("file", file);
-            fetch('/board/upload/image', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if(data.url) $summernote.summernote('insertImage', data.url);
-            })
-            .catch(err => alert("이미지 업로드에 실패했습니다."));
-        }
-    });
-</script>
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/lang/summernote-ko-KR.min.js"></script>
+<script src="/static/js/board/board_write.js"></script>
 {% endblock %}
