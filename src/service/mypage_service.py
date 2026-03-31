@@ -15,9 +15,12 @@ from src.common import fetch_query, execute_query, log_system, login_required
 from src.common.storage import upload_file
 from src.domain import Member
 import math
-from flask import Blueprint, request, session, render_template, redirect, url_for
+import datetime
+import urllib.parse
+from flask import Blueprint, request, session, flash, render_template, redirect, url_for, make_response, jsonify
 # 모델 임포트 경로가 정확해야 합니다.
 from src.common import fetch_query, login_required
+import urllib.parse
 
 mypage_bp = Blueprint('mypage', __name__)
 
@@ -301,73 +304,173 @@ def unblock_user(blocked_id):
     # 2. 올바른 리다이렉트 방법 (블루프린트명.함수명)
     return redirect(url_for('mypage.my_activity') + '#blocks')
 
+# AI 분석 결과 저장
+@mypage_bp.route('/save_result', methods=['POST'])
+@login_required
+def save_result():
+    file = request.files.get('merged_image')
+    # 사용자가 입력한 이름을 가져오되, 없으면 기본값 설정
+    original_filename = request.form.get('original_filename') or '무제_분석결과'
+
+    try:
+        boar_count = int(request.form.get('boar_count', 0))
+        water_deer_count = int(request.form.get('water_deer_count', 0))
+        racoon_count = int(request.form.get('racoon_count', 0))
+    except (ValueError, TypeError):
+        boar_count = water_deer_count = racoon_count = 0
+
+    user_id = session.get('user_id')
+    if not file or not user_id:
+        return jsonify({"success": False, "message": "로그인 정보 또는 파일이 없습니다."}), 400
+
+    try:
+        # 1. Cloudinary 업로드
+        result_url = upload_file(file, folder="results")
+
+        # ✅ [교정] 아래 코드들이 try 문 안으로 일렬로 들여쓰기 되어야 합니다.
+        if result_url:
+            sql = """
+                INSERT INTO ai_analysis 
+                (user_id, filename, image_url, boar_count, water_deer_count, racoon_count, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, NOW())
+            """
+
+            execute_query(sql, (
+                user_id,
+                original_filename,
+                result_url,
+                boar_count,
+                water_deer_count,
+                racoon_count
+            ))
+
+            return jsonify({"success": True, "url": result_url, "message": "성공적으로 저장되었습니다!"})
+        else:
+            return jsonify({"success": False, "message": "업로드된 URL을 찾을 수 없습니다."}), 500
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"저장 중 시스템 오류: {e}")
+        return jsonify({"success": False, "message": f"서버 오류: {str(e)}"}), 500
+
 # AI 분석 결과
 @mypage_bp.route('/ai_results')
 @login_required
 def ai_results():
-
-    # 2. 페이지네이션 설정
-    page = request.args.get('page', type=int, default=1)
-    per_page = 10
-    offset = (page - 1) * per_page
-
-    user_id = session.get('user_id')
-
     try:
-        # 3. 전체 데이터 개수 조회 (SQL 직접 사용)
-        count_sql = "SELECT COUNT(*) as cnt FROM ai_analysis WHERE user_id = %s"
-        total_row = fetch_query(count_sql, (user_id,), one=True)
+        user_id = session.get('user_id')
+        page = request.args.get('page', 1, type=int)
+        per_page = 5
+        offset = (page - 1) * per_page
+
+        total_row = fetch_query(
+            "SELECT COUNT(*) as cnt FROM ai_analysis WHERE user_id = %s",
+            (user_id,), one=True
+        )
         total_count = total_row['cnt'] if total_row else 0
         total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
-
-        # 4. 분석 결과 목록 조회
         list_sql = """
             SELECT id, filename, boar_count, water_deer_count, racoon_count, created_at 
             FROM ai_analysis 
             WHERE user_id = %s 
-            ORDER BY created_at DESC 
+            ORDER BY created_at DESC
             LIMIT %s OFFSET %s
         """
         items = fetch_query(list_sql, (user_id, per_page, offset))
 
-        # 5. html의 pagination 객체 구조에 맞춰 데이터 구성
+        formatted_items = []
+        if items:
+            for row in items:
+                if isinstance(row, dict):
+                    formatted_items.append(row)
+                else:
+                    formatted_items.append({
+                        'id': row[0],
+                        'filename': row[1],
+                        'boar_count': row[2],
+                        'water_deer_count': row[3],
+                        'racoon_count': row[4],
+                        'created_at': row[5]
+                    })
+
         pagination_obj = {
-            'records': items if items else [],  # 'items'를 'records'로 변경
-            'page': page,
+            'records': formatted_items,
             'total_pages': total_pages,
+            'page': page,
             'has_prev': page > 1,
             'has_next': page < total_pages,
             'prev_num': page - 1,
-            'next_num': page + 1,
-            'page_range': list(range(1, total_pages + 1))
+            'next_num': page + 1
         }
-
         return render_template('mypage/ai_model.html', pagination=pagination_obj)
 
     except Exception as e:
-        print(f"ai_results 조회 에러: {e}")
-        return f"<script>alert('데이터 조회 중 오류가 발생했습니다.'); history.back();</script>", 500
+        print(f"목록 로드 중 에러: {e}")
+        return render_template('mypage/ai_model.html', pagination={'records': []})
 
-# AI 분석 결과 다운로드
-@mypage_bp.route('/download-report/<int:analysis_id>') # 주소 수정
+# AI 분석 결과 확인
+@mypage_bp.route('/download_report/<int:analysis_id>')
 @login_required
 def download_ai_report(analysis_id):
+    try:
+        # 1. DB에서 데이터 조회
+        sql = "SELECT filename, boar_count, water_deer_count, racoon_count FROM ai_analysis WHERE id = %s"
+        result = fetch_query(sql, (analysis_id,))
 
-    analysis = AIAnalysis.query.get_or_404(analysis_id)
+        if not result:
+            return "파일을 찾을 수 없습니다.", 404
 
-    # 메모장에 기록할 내용 작성
-    report_content = f"""[AI 동물 분석 리포트]
-분석 파일명: {analysis.filename}
-분석 일시: {analysis.created_at.strftime('%Y-%m-%d %H:%M:%S')}
----------------------------------
-- 멧돼지 탐지: {analysis.boar_count}건
-- 고라니 탐지: {analysis.water_deer_count}건
-- 너구리 탐지: {analysis.racoon_count}건
----------------------------------
-도(道)와주세요 - 로드킬 예방 시스템"""
+        # 2. 데이터 추출 (딕셔너리/튜플 모두 대응)
+        row = result[0]
+        if isinstance(row, dict):
+            fname = row.get('filename') or "무제_분석결과"
+            boar = row.get('boar_count', 0)
+            deer = row.get('water_deer_count', 0)
+            racoon = row.get('racoon_count', 0)
+        else:
+            fname = row[0] or "무제_분석결과"
+            boar = row[1]
+            deer = row[2]
+            racoon = row[3]
 
-    response = make_response(report_content)
-    response.headers["Content-Disposition"] = f"attachment; filename=report_{analysis_id}.txt"
-    response.headers["Content-Type"] = "text/plain"
-    return response
+        # 3. 리포트 텍스트 내용 작성 (변수명 통일: fname, boar, deer, racoon)
+        content = (
+            f"AI 분석 결과 보고서\n"
+            f"====================\n"
+            f"파일명: {fname}\n"
+            f"멧돼지: {boar}마리\n"
+            f"고라니: {deer}마리\n"
+            f"너구리: {racoon}마리\n"
+            f"====================\n"
+            f"분석 일시: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+
+        # 4. 한글 파일명 깨짐 방지 인코딩
+        quoted_filename = urllib.parse.quote(f"{fname}.txt")
+
+        response = make_response(content)
+        # RFC 5987 표준에 따라 filename* 사용 (한글 완벽 지원)
+        response.headers["Content-Disposition"] = f"attachment; filename*=UTF-8''{quoted_filename}"
+        response.headers["Content-Type"] = "text/plain; charset=utf-8"
+
+        return response
+
+    except Exception as e:
+        print(f"--- [DOWNLOAD ERROR] {e} ---")
+        return f"다운로드 중 오류가 발생했습니다: {str(e)}", 500
+
+# AI 분석 결과 삭제
+@mypage_bp.route('/delete_ai_result/<int:analysis_id>')
+@login_required
+def delete_ai_result(analysis_id):
+    user_id = session.get('user_id')
+    try:
+        # 본인 데이터인지 확인 후 삭제
+        sql = "DELETE FROM ai_analysis WHERE id = %s AND user_id = %s"
+        execute_query(sql, (analysis_id, user_id))
+        return redirect(url_for('mypage.ai_results'))
+    except Exception as e:
+        print(f"삭제 중 오류: {e}")
+        return "<script>alert('삭제 중 오류가 발생했습니다.'); history.back();</script>"

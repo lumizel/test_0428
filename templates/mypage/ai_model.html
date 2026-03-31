@@ -5,44 +5,69 @@
 {% block style %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 <style>
-    .activity-body { background-color: #F8F9FA; padding: 50px 0; min-height: 60vh; }
-    .activity-header-box {
-        max-width: 900px; margin: 0 auto 20px auto; background-color: #008080;
-        color: #FFFFFF; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        display: flex; justify-content: center; align-items: center; height: 55px;
+    .activity-body {
+        background-color: #F8F9FA; padding: 50px 0; min-height: 80vh;
+        display: flex; flex-direction: column; /* 수직 정렬 구조 설정 */
     }
 
-    .activity-header-box h2 { font-size: 20px; margin: 0; }
+    .activity-header-box {
+        max-width: 900px;
+        margin: 0 auto 20px auto;
+        background-color: #008080;
+        color: #FFFFFF;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 55px;
+        padding: 0;
+    }
+    .activity-header-box h2 {
+        font-size: 20px;
+        margin: 0 !important;
+        padding: 0;
+        line-height: 1;
+    }
+
+    /* ✅ 카드 높이를 4개 분량으로 고정 */
     .activity-card-container {
         max-width: 900px; margin: 0 auto; border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.08); background-color: #FFFFFF;
-        overflow: hidden; padding: 20px 0; height: 462px;
+        padding-bottom: 30px;
+        height: 650px; display: flex; flex-direction: column; /* 높이 고정 */
     }
+
+    .ai-result-list { flex: 1; overflow-y: auto; }
 
     .activity-item {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 20px 30px; border-bottom: 1px solid #f1f1f1; transition: background 0.2s;
+        padding: 20px 30px; border-bottom: 1px solid #f1f1f1;
     }
-
-    .activity-item:hover { background-color: #f9f9f9; }
-    .item-title { font-weight: 600; margin-bottom: 5px; font-size: 16px; }
-    .item-date { font-size: 13px; color: #999; margin-bottom: 8px; }
-    .result-badge-group { display: flex; gap: 8px; }
-    .badge-ai {
-        font-size: 11px; padding: 4px 10px; border-radius: 50px;
-        background-color: #f8f9fa; border: 1px solid #eee; color: #555;
-    }
+    .item-title { font-weight: 600; font-size: 16px; color: #333; }
+    .item-date { font-size: 12px; color: #999; }
+    .badge-ai { font-size: 11px; padding: 4px 10px; border-radius: 50px; background-color: #f8f9fa; border: 1px solid #eee; margin-right: 5px; }
 
     .download-btn {
-        color: #008080; border: 1px solid #008080; padding: 6px 15px;
-        border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none;
-        transition: 0.3s;
+        color: #008080; border: 1px solid #008080; width: 40px; height: 40px;
+        border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        text-decoration: none; transition: all 0.2s;
     }
-
     .download-btn:hover { background-color: #008080; color: #fff; }
-    .empty-msg { text-align: center; padding: 80px 0; color: #ccc; }
-    .home-back { text-align: center; padding: 40px 0 20px 0; }
+
+    .page-link { color: #495057 !important; background-color: #fff !important; border: 1px solid #dee2e6 !important; }
+    .page-item.active .page-link { background-color: #008080 !important; border-color: #008080 !important; color: white !important; }
+
+    /* ✅ 홈으로 돌아가기 영역: 남은 여백을 꽉 채우고 중앙 정렬 */
+    .home-back {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 0;
+    }
     .home-back a { color: #888; text-decoration: none; font-size: 14px; }
+    .empty-msg { text-align: center; padding: 100px 0; color: #ccc; flex: 1; display: flex; align-items: center; justify-content: center; }
 </style>
 {% endblock %}
 
@@ -55,35 +80,38 @@
 
         <div class="activity-card-container">
             <div class="ai-result-list">
-                {# 1. 여기서 pagination.items를 pagination.records로 변경 #}
                 {% if pagination.records %}
-                    {# 2. 여기서 pagination.items를 pagination.records로 변경 #}
                     {% for item in pagination.records %}
                     <div class="activity-item">
-                        <div>
-                            <div class="item-title text-dark">{{ item['filename'] }}</div>
+                        <div style="flex: 1;">
+                            <div class="item-title">{{ item['filename'] }}</div>
                             <div class="item-date">{{ item['created_at'] }}</div>
-                            <div class="result-badge-group">
+                            <div style="margin-top: 8px;">
                                 <span class="badge-ai">멧돼지: {{ item['boar_count'] }}</span>
                                 <span class="badge-ai">고라니: {{ item['water_deer_count'] }}</span>
                                 <span class="badge-ai">너구리: {{ item['racoon_count'] }}</span>
                             </div>
                         </div>
-                        <a href="#" class="download-btn">
-                            <i class="bi bi-download me-1"></i> 리포트
+                        <a href="{{ url_for('mypage.download_ai_report', analysis_id=item['id']) }}" class="download-btn" title="리포트 다운로드">
+                            <i class="bi bi-search"></i>
+                        </a>
+                        <a href="{{ url_for('mypage.delete_ai_result', analysis_id=item['id']) }}"
+                           class="download-btn ms-2"
+                           style="color: #dc3545; border-color: #dc3545;"
+                           onmouseover="this.style.backgroundColor='#dc3545'; this.style.color='white';"
+                           onmouseout="this.style.backgroundColor='transparent'; this.style.color='#dc3545';"
+                           title="삭제"
+                           onclick="return confirm('정말 삭제하시겠습니까?');">
+                            <i class="bi bi-trash"></i>
                         </a>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div class="empty-msg">
-                        <i style="font-size: 3rem; display: block; margin-bottom: 85px;"></i>
-                        <br>분석 내역이 존재하지 않습니다.
-                    </div>
+                    <div class="empty-msg"><br><br><br><br><br><br><br>분석 내역이 없습니다.</div>
                 {% endif %}
             </div>
 
-            {% if pagination.total_pages > 1 %}
-            <nav class="mt-4">
+            <nav class="mt-4 mb-3">
                 <ul class="pagination justify-content-center">
                     {% if pagination.has_prev %}
                     <li class="page-item">
@@ -91,10 +119,10 @@
                     </li>
                     {% endif %}
 
-                    {% for p in pagination.page_range %}
-                        <li class="page-item {{ 'active' if p == pagination.page }}">
-                            <a class="page-link border-0 shadow-sm mx-1" href="{{ url_for('mypage.ai_results', page=p) }}">{{ p }}</a>
-                        </li>
+                    {% for p in range(1, pagination.total_pages + 1) %}
+                    <li class="page-item {{ 'active' if p == pagination.page }}">
+                        <a class="page-link border-0 shadow-sm mx-1" href="{{ url_for('mypage.ai_results', page=p) }}">{{ p }}</a>
+                    </li>
                     {% endfor %}
 
                     {% if pagination.has_next %}
@@ -104,11 +132,10 @@
                     {% endif %}
                 </ul>
             </nav>
-            {% endif %}
         </div>
 
         <div class="home-back">
-            <a href="/"><br>홈으로 돌아가기</a>
+            <a href="/"><br><br>홈으로 돌아가기</a>
         </div>
     </div>
 </div>
