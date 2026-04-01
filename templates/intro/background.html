@@ -3,98 +3,7 @@
 {% block title %}프로젝트 배경 - {% endblock %}
 
 {% block style %}
-<style>
-    /* 배경 페이지 전용 스타일 */
-    .bg-section { padding: 80px 0; }
-    .point-text {
-        /* 기존 color 대신 background-color 사용 */
-        background-color: #20828a; /* 메인 페이지에서 사용하셨던 부드러운 노란색 계열 */
-        color: #ffffff;               /* 배경 위에서 잘 보이도록 글자색은 어두운 색으로 설정 */
-        font-weight: 700;
-
-        /* 강조 효과를 위한 추가 스타일 */
-        padding: 2px 8px;          /* 상하 2px, 좌우 8px 여백으로 형광펜 느낌 부여 */
-        border-radius: 5px;        /* 모서리를 살짝 둥글게 */
-        display: inline-block;     /* 여백이 글자 라인에 잘 반영되도록 설정 */
-        line-height: 1.2;
-    }
-
-    .accent-card {
-        border-left: 5px solid var(--primary-teal);
-        background-color: #f8f9fa;
-        padding: 30px;
-        border-radius: 0 15px 15px 0;
-    }
-
-    /* 이미지와 placeholder의 크기를 동일하게 고정 */
-    .img-box-fixed {
-        width: 100%;
-        height: 350px; /* 두 번째 박스 규격에 맞춘 고정 높이 */
-        overflow: hidden;
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #e9ecef;
-    }
-
-    /* 박스 안의 이미지가 비율을 유지하며 꽉 차게 설정 */
-    .img-box-fixed img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* 이미지가 잘리더라도 박스를 가득 채움 */
-        object-position: center;
-    }
-
-    /* 폰트가 깨져 보인다면 강제로 다시 지정 */
-    h1, h2, h3, p, span {
-        font-family: 'Pretendard', sans-serif !important;
-    }
-
-        /* --- [핵심 수정] 모바일 대응 및 좌우 스크롤 제거 --- */
-    @media (max-width: 991.98px) {
-        /* 1. 전체 페이지에서 좌우 스크롤 차단 */
-        html, body {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        /* 2. 컨테이너에 좌우 여백(Padding) 추가 */
-        .bg-section {
-            padding: 40px 15px; /* 좌우 15px 여백 생성 */
-        }
-
-        /* 3. 히어로 섹션 텍스트 및 간격 조정 */
-        .tip-hero {
-            padding: 40px 15px;
-            margin-bottom: 30px;
-            margin-left: 5px;  /* 살짝 안으로 들여쓰기 */
-            margin-right: 5px;
-        }
-        .tip-hero h1 {
-            font-size: 1.8rem !important; /* 너무 큰 글자가 화면 뚫고 나가는 것 방지 */
-            word-break: keep-all;
-        }
-        .tip-hero p {
-            font-size: 0.95rem;
-            padding: 0 10px;
-        }
-
-        /* 4. 포스터 컨테이너 조정 */
-        .poster-container { position: relative; top: 0; margin-bottom: 40px; }
-        .poster-box { height: auto; max-height: 450px; }
-
-        /* 5. 부트스트랩 row의 음수 마진으로 인한 스크롤 방지 */
-        .row {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        .row > [class*="col-"] {
-            padding-left: 5px;
-            padding-right: 5px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/intro/background.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -102,7 +11,7 @@
     <div class="text-center mb-5">
         <h1 class="display-4 fw-bold mb-3">프로젝트 배경</h1>
         <p class="lead text-muted">안전한 도로 문화를 위한 기술적 도전</p>
-        <hr class="mx-auto" style="width: 60px; height: 4px; background-color: var(--primary-teal); opacity: 1;">
+        <hr class="mx-auto" style="width: 60px; height: 4px; background-color: #20828a; opacity: 1;">
     </div>
 
     <div class="row align-items-center mb-5">
@@ -147,4 +56,8 @@
         </p>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/intro/background.js') }}"></script>
 {% endblock %}

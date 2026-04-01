@@ -3,115 +3,7 @@
 {% block title %}도움말 - {% endblock %}
 
 {% block style %}
-<style>
-    .bg-section { padding: 80px 0; }
-    
-    /* 상단 헤더 섹션 */
-    .help-hero {
-        background: linear-gradient(135deg, #20828A 0%, #165e63 100%);
-        padding: 60px 0;
-        border-radius: 20px;
-        color: white;
-        margin-bottom: 50px;
-    }
-
-    /* 구글 스타일 아코디언 커스텀 */
-    .accordion-item {
-        border: none;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 10px;
-    }
-    
-    .accordion-button {
-        font-weight: 600;
-        color: #333;
-        padding: 20px;
-        background-color: transparent !important;
-        box-shadow: none !important;
-    }
-
-    .accordion-button:not(.collapsed) {
-        color: #20828A; /* 펼쳐졌을 때 텍스트 색상 */
-    }
-
-    /* 토글 아이콘 색상 변경 */
-    .accordion-button::after {
-        background-size: 1rem;
-    }
-
-    .accordion-body {
-        padding: 0 20px 30px 20px;
-        color: #666;
-        line-height: 1.8;
-    }
-
-    .point-tech {
-            background-color: #20828A; /* 배경색: 청록색 */
-            color: #ffffff;           /* 폰트색: 하얀색 */
-            font-weight: 700;
-            padding: 2px 8px;          /* 좌우 여백을 살짝 늘려 박스 느낌을 줍니다 */
-            border-radius: 4px;
-            display: inline-block;     /* 박스 형태가 무너지지 않게 설정 */
-            line-height: 1.4;
-        }
-
-    /* 검색창 스타일 */
-    .search-box {
-        max-width: 600px;
-        margin: 0 auto;
-        position: relative;
-    }
-    .search-box input {
-        border-radius: 30px;
-        padding: 15px 25px;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-        /* --- [핵심 수정] 모바일 대응 및 좌우 스크롤 제거 --- */
-    @media (max-width: 991.98px) {
-        /* 1. 전체 페이지에서 좌우 스크롤 차단 */
-        html, body {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        /* 2. 컨테이너에 좌우 여백(Padding) 추가 */
-        .bg-section {
-            padding: 40px 15px; /* 좌우 15px 여백 생성 */
-        }
-
-        /* 3. 히어로 섹션 텍스트 및 간격 조정 */
-        .tip-hero {
-            padding: 40px 15px;
-            margin-bottom: 30px;
-            margin-left: 5px;  /* 살짝 안으로 들여쓰기 */
-            margin-right: 5px;
-        }
-        .tip-hero h1 {
-            font-size: 1.8rem !important; /* 너무 큰 글자가 화면 뚫고 나가는 것 방지 */
-            word-break: keep-all;
-        }
-        .tip-hero p {
-            font-size: 0.95rem;
-            padding: 0 10px;
-        }
-
-        /* 4. 포스터 컨테이너 조정 */
-        .poster-container { position: relative; top: 0; margin-bottom: 40px; }
-        .poster-box { height: auto; max-height: 450px; }
-
-        /* 5. 부트스트랩 row의 음수 마진으로 인한 스크롤 방지 */
-        .row {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        .row > [class*="col-"] {
-            padding-left: 5px;
-            padding-right: 5px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/faq/faq.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -119,15 +11,14 @@
     <div class="help-hero text-center shadow-sm">
         <br><h1 class="display-5 fw-bold mb-3">어떻게 도와드릴까요?</h1>
         <p class="lead mb-4" style="opacity: 0.9;">도로 위의 숨은 위험, 도(道)서관이 먼저 읽습니다.</p>
-
     </div>
 
     <div class="row justify-content-center">
         <div class="col-lg-9">
             <h2 class="h4 fw-bold mb-4 px-2">자주 사용되는 도움말</h2>
-            
+
             <div class="accordion accordion-flush" id="faqAccordion">
-                
+
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
@@ -136,7 +27,7 @@
                     </h2>
                     <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
                         <div class="accordion-body">
-                            AI 기술을 활용해 도로 위 위험 요소를 실시간으로 분석하고, 
+                            AI 기술을 활용해 도로 위 위험 요소를 실시간으로 분석하고,
                             운전자들이 서로의 경험과 지식을 공유하는 안전 주행 통합 플랫폼입니다.
                         </div>
                     </div>
@@ -185,4 +76,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/faq/faq.js') }}"></script>
 {% endblock %}

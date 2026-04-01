@@ -1,0 +1,91 @@
+/* 소개 페이지 전용 스타일 */
+.bg-section { padding: 80px 0; }
+.point-text { color: #20828A; font-weight: 700; }
+
+/* 강조 카드 */
+.accent-card {
+    border-left: 5px solid #165e63;
+    background-color: #20828A;
+    padding: 40px;
+    border-radius: 0 15px 15px 0;
+    margin-bottom: 80px;
+    color: #ffffff;
+}
+
+/* 도(道)서관 강조 박스 */
+.highlight-box {
+    background-color: #fff5d7;
+    color: #212529;
+    padding: 2px 10px;
+    border-radius: 4px;
+    margin: 0 4px;
+    display: inline-block;
+}
+
+.accent-card p {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 이미지 홀더 스타일 */
+.img-placeholder {
+    background-color: #e9ecef;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 350px;
+    color: #adb5bd;
+    text-align: center;
+    padding: 20px;
+}
+
+/* 기능 소개 아이콘 박스 */
+.feature-icon-circle {
+    width: 80px;
+    height: 80px;
+    background-color: #e6f2f3;
+    color: #20828A;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.lh-lg { line-height: 1.8; }
+
+.feature-section {
+    margin-bottom: 120px;
+}
+
+/* 제목 배경색 강조 스타일 */
+.title-bg-teal {
+    background-color: #20828a;
+    color: white !important;
+    padding: 2px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+/* 모바일 대응 및 좌우 스크롤 제거 */
+@media (max-width: 991.98px) {
+    html, body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    .bg-section {
+        padding: 40px 15px;
+    }
+    .feature-section {
+        margin-bottom: 60px;
+    }
+    .display-4 { font-size: 2.5rem; }
+    .accent-card { padding: 25px; margin-bottom: 40px; }
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}

@@ -3,127 +3,7 @@
 {% block title %}홈페이지 소개 - {% endblock %}
 
 {% block style %}
-<style>
-    /* 소개 페이지 전용 스타일 */
-    .bg-section { padding: 80px 0; }
-    .point-text { color: var(--primary-teal); font-weight: 700; }
-
-    /* 강조 카드 */
-    .accent-card {
-        border-left: 5px solid #165e63;
-        background-color: #20828A;
-        padding: 40px;
-        border-radius: 0 15px 15px 0;
-        margin-bottom: 80px;
-        color: #ffffff;
-    }
-
-    /* 도(道)서관 강조 박스 */
-    .highlight-box {
-        background-color: #fff5d7;
-        color: #212529;
-        padding: 2px 10px;
-        border-radius: 4px;
-        margin: 0 4px;
-        display: inline-block;
-    }
-
-    .accent-card p {
-        color: rgba(255, 255, 255, 0.9) !important;
-    }
-
-    /* 이미지 홀더 스타일 */
-    .img-placeholder {
-        background-color: #e9ecef;
-        border-radius: 15px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 350px;
-        color: #adb5bd;
-        text-align: center;
-        padding: 20px;
-    }
-
-    /* 기능 소개 아이콘 박스 */
-    .feature-icon-circle {
-        width: 80px;
-        height: 80px;
-        background-color: #e6f2f3;
-        color: var(--primary-teal);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        margin-bottom: 20px;
-    }
-
-    .lh-lg { line-height: 1.8; }
-
-    /* 섹션 간 간격 및 하단 여백 통일 */
-    .feature-section {
-        margin-bottom: 120px;
-    }
-
-/* 제목 배경색 강조 스타일 (굵기 및 크기 유지 버전) */
-    .title-bg-teal {
-        background-color: #20828a;
-        color: white !important;   /* 배경 위에서 글씨는 무조건 하얗게 */
-        padding: 2px 10px;         /* 박스 여백 */
-        border-radius: 6px;        /* 모서리 살짝 둥글게 */
-        display: inline-block;     /* 텍스트 길이만큼 배경색 적용 */
-        margin-bottom: 5px;
-        /* font-weight와 font-size를 여기서 지정하지 않으면 부모인 h3의 속성을 그대로 따릅니다. */
-    }
-
-        /* --- [핵심 수정] 모바일 대응 및 좌우 스크롤 제거 --- */
-    @media (max-width: 991.98px) {
-        /* 1. 전체 페이지에서 좌우 스크롤 차단 */
-        html, body {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        /* 2. 컨테이너에 좌우 여백(Padding) 추가 */
-        .bg-section {
-            padding: 40px 15px; /* 좌우 15px 여백 생성 */
-        }
-
-        /* 3. 히어로 섹션 텍스트 및 간격 조정 */
-        .tip-hero {
-            padding: 40px 15px;
-            margin-bottom: 30px;
-            margin-left: 5px;  /* 살짝 안으로 들여쓰기 */
-            margin-right: 5px;
-        }
-        .tip-hero h1 {
-            font-size: 1.8rem !important; /* 너무 큰 글자가 화면 뚫고 나가는 것 방지 */
-            word-break: keep-all;
-        }
-        .tip-hero p {
-            font-size: 0.95rem;
-            padding: 0 10px;
-        }
-
-        /* 4. 포스터 컨테이너 조정 */
-        .poster-container { position: relative; top: 0; margin-bottom: 40px; }
-        .poster-box { height: auto; max-height: 450px; }
-
-        /* 5. 부트스트랩 row의 음수 마진으로 인한 스크롤 방지 */
-        .row {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        .row > [class*="col-"] {
-            padding-left: 5px;
-            padding-right: 5px;
-        }
-    }
-</style>
-
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/intro/features.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -131,7 +11,7 @@
     <div class="text-center mb-5">
         <h1 class="display-4 fw-bold mb-3">홈페이지 소개</h1>
         <p class="lead text-muted">도로 위의 지혜를 읽는 가장 스마트한 방법</p>
-        <hr class="mx-auto" style="width: 60px; height: 4px; background-color: var(--primary-teal); opacity: 1;">
+        <hr class="mx-auto" style="width: 60px; height: 4px; background-color: #20828a; opacity: 1;">
     </div>
 
     <div class="accent-card shadow-sm">
@@ -149,14 +29,10 @@
         <p class="text-muted">도(道)서관이 제공하는 세심한 안전 솔루션</p>
     </div>
 
-<div class="row align-items-center feature-section">
+    <div class="row align-items-center feature-section">
         <div class="col-lg-6 pe-lg-5">
             <div class="feature-icon-circle">
-                <svg width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
-                    <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105C6.054 14.86 6.744 15 7.5 15c3.59 0 6.5-2.462 6.5-5.5S11.09 4 7.5 4a6.52 6.52 0 0 0-4.04 1.385C1.868 6.45 1 8.163 1 10c0 1.278.435 2.505 1.165 3.803Z"/>
-                </svg>
-            </div>
+                <i class="bi bi-robot"></i> </div>
             <h3 class="fw-bold mb-3">
                 <span class="title-bg-teal">도(道)와주세요</span>
                 <span class="text-muted fs-5">(Solution Archive)</span>
@@ -168,29 +44,20 @@
                 분석된 데이터는 단순한 경고를 넘어 사고 다발 구역 예보 시스템으로 시각화되어, <br> 당신의 주행을 더 안전하게 가이드합니다.
             </p>
         </div>
-
         <div class="col-lg-6">
-            <div class="img-placeholder shadow-sm overflow-hidden"
-                 style="min-height: 350px; border-radius: 15px; background-color: #fff; padding: 0;">
-
-                <img src="/static/img/sss.png"
-                     alt="AI 위험 감지 데모 화면"
-                     class="d-block w-100 h-100"
-                     style="object-fit: cover; object-position: center;">
+            <div class="img-placeholder shadow-sm overflow-hidden" style="min-height: 350px; border-radius: 15px; background-color: #fff; padding: 0;">
+                <img src="/static/img/sss.png" alt="AI 위험 감지 데모 화면" class="d-block w-100 h-100" style="object-fit: cover; object-position: center;">
             </div>
         </div>
     </div>
 
-<div class="row align-items-center flex-lg-row-reverse feature-section">
+    <div class="row align-items-center flex-lg-row-reverse feature-section">
         <div class="col-lg-6 ps-lg-5 text-lg-end">
             <div class="d-flex justify-content-lg-end">
                 <div class="feature-icon-circle">
-                    <svg width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor">
-                        <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0"/>
-                    </svg>
+                    <i class="bi bi-chat-dots"></i>
                 </div>
             </div>
-
             <h3 class="fw-bold mb-3">
                 <span class="title-bg-teal">도(道)란도란</span>
                 <span class="text-muted fs-5">(Communication Hub)</span>
@@ -199,16 +66,10 @@
             <p class="lh-lg">
                 '도란도란'은 길(道) 위에서 일어나는 소소한 이야기부터 실시간 교통 상황까지, <br>운전자들이 자유롭게 소통하는 커뮤니티 공간입니다.
             </p>
-            <p class="lh-lg">
-                베테랑 운전자들의 노하우를 배우고,<br> 오늘 내가 겪은 도로 위의 상황을 이웃 운전자들과 나누어 보세요.
-            </p>
         </div>
-
         <div class="col-lg-6">
             <div class="shadow-sm overflow-hidden" style="border-radius: 15px;">
-                <img src="/static/img/communication_hub.png"
-                     alt="안전 수칙 가이드 화면"
-                     class="img-fluid w-100 d-block">
+                <img src="/static/img/communication_hub.png" alt="커뮤니티 화면" class="img-fluid w-100 d-block">
             </div>
         </div>
     </div>
@@ -216,9 +77,7 @@
     <div class="row align-items-center feature-section">
         <div class="col-lg-6 pe-lg-5">
             <div class="feature-icon-circle">
-                 <svg width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.652-.689-1.782-.886-3.112-.752-1.234.124-2.503.523-3.388.893V2.828zm7.5.752c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.885-.37-2.154-.769-3.388-.893-1.33-.134-2.458.063-3.112.752V3.58z"/>
-                    </svg>
+                <i class="bi bi-book"></i>
             </div>
             <h3 class="fw-bold mb-3">
                 <span class="title-bg-teal">도(道)움말</span>
@@ -228,17 +87,16 @@
             <p class="lh-lg">
                 도(道)움말은 도로 위에서 마주할 수 있는 다양한 위험 상황에 대비해, <br>꼭 알아두어야 할 핵심 안전 수칙을 안내합니다.
             </p>
-            <p class="lh-lg">
-                직관적인 포스터 이미지와 함께 음주운전 금지, 안전벨트, 졸음운전 예방 등 <br>항목별 수칙을 토글 형식으로 제공하여 한눈에 확인하실 수 있습니다.
-            </p>
         </div>
         <div class="col-lg-6">
             <div class="shadow-sm overflow-hidden" style="border-radius: 15px;">
-                <img src="/static/img/safety_guide_archive.png"
-                     alt="안전 수칙 가이드 화면"
-                     class="img-fluid w-100 d-block">
+                <img src="/static/img/safety_guide_archive.png" alt="안전 수칙 가이드 화면" class="img-fluid w-100 d-block">
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/intro/features.js') }}"></script>
 {% endblock %}

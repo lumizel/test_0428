@@ -1,0 +1,87 @@
+/* 도움말 페이지 전용 스타일 */
+.bg-section { padding: 80px 0; }
+
+/* 상단 헤더 섹션 */
+.help-hero {
+    background: linear-gradient(135deg, #20828A 0%, #165e63 100%);
+    padding: 60px 0;
+    border-radius: 20px;
+    color: white;
+    margin-bottom: 50px;
+}
+
+/* 구글 스타일 아코디언 커스텀 */
+.accordion-item {
+    border: none;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+}
+
+.accordion-button {
+    font-weight: 600;
+    color: #333;
+    padding: 20px;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.accordion-button:not(.collapsed) {
+    color: #20828A; /* 펼쳐졌을 때 텍스트 색상 */
+}
+
+/* 토글 아이콘 설정 */
+.accordion-button::after {
+    background-size: 1rem;
+}
+
+.accordion-body {
+    padding: 0 20px 30px 20px;
+    color: #666;
+    line-height: 1.8;
+}
+
+.point-tech {
+    background-color: #20828A;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    line-height: 1.4;
+}
+
+/* 검색창 스타일 (필요시 사용) */
+.search-box {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+}
+.search-box input {
+    border-radius: 30px;
+    padding: 15px 25px;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* 모바일 대응 */
+@media (max-width: 991.98px) {
+    html, body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    .bg-section {
+        padding: 40px 15px;
+    }
+    .help-hero {
+        padding: 40px 15px;
+        margin-bottom: 30px;
+    }
+    .help-hero h1 {
+        font-size: 1.8rem !important;
+        word-break: keep-all;
+    }
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}

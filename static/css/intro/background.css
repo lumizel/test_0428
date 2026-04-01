@@ -1,0 +1,69 @@
+/* 배경 페이지 전용 스타일 */
+.bg-section { padding: 80px 0; }
+
+.point-text {
+    background-color: #20828a;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 5px;
+    display: inline-block;
+    line-height: 1.2;
+}
+
+.accent-card {
+    border-left: 5px solid #20828a; /* var 대신 직접 지정 */
+    background-color: #f8f9fa;
+    padding: 30px;
+    border-radius: 0 15px 15px 0;
+}
+
+/* 이미지와 placeholder의 크기를 동일하게 고정 */
+.img-box-fixed {
+    width: 100%;
+    height: 350px;
+    overflow: hidden;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef;
+}
+
+.img-box-fixed img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* 폰트 지정 */
+h1, h2, h3, p, span {
+    font-family: 'Pretendard', sans-serif !important;
+}
+
+/* 모바일 대응 및 좌우 스크롤 제거 */
+@media (max-width: 991.98px) {
+    html, body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .bg-section {
+        padding: 40px 15px;
+    }
+
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .row > [class*="col-"] {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .img-box-fixed {
+        height: 250px; /* 모바일에서는 높이 조절 */
+    }
+}

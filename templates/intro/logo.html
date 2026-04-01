@@ -3,152 +3,7 @@
 {% block title %}로고 소개 - {% endblock %}
 
 {% block style %}
-<style>
-    /* 소개 페이지 전용 스타일 */
-    .bg-section { padding: 80px 0; }
-    .point-text { color: var(--primary-teal); font-weight: 700; }
-
-    /* --- [수정] 강조 카드: 배경색을 녹색(#20828A)으로, 글자를 하얀색으로 --- */
-    .accent-card {
-        border-left: 5px solid #165e63;
-        background-color: #20828A;      /* 요청하신 녹색 계열 */
-        padding: 40px;
-        border-radius: 0 15px 15px 0;
-        margin-bottom: 80px;
-        color: #ffffff;                 /* 글자색 하얀색 */
-    }
-
-    /* 2. 로고 대형 이미지 박스 (크기만 조절) */
-    .logo-main-box {
-        width: 100%;
-        max-width: 700px;              /* [수정] 박스 자체의 최대 너비를 제한해서 스케일 조절 */
-        margin: 0 auto 40px auto;      /* [수정] 중앙 정렬 유지 및 하단 여백 */
-        aspect-ratio: 3 / 2;
-        background-color: #ffffff;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #eee;
-        overflow: hidden;
-        padding: 0;
-    }
-
-    .logo-main-box img {
-        width: auto;           /* 너비 자동 */
-        height: auto;          /* 높이 자동 */
-        max-width: 90%;        /* 박스 너비의 90%를 넘지 않음 */
-        max-height: 90%;       /* 박스 높이의 90%를 넘지 않음 */
-        object-fit: contain;   /* 비율 유지하며 전체 보여주기 */
-    }
-
-    /* 3. 컬러 팔레트 스타일 */
-    .color-chip-container {
-        display: flex;
-        gap: 20px;
-        margin-top: 20px;
-    }
-    .color-chip {
-        flex: 1;
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-    .chip-teal { background-color: #20828A; }
-    .chip-grey { background-color: #212529; }
-    .color-info { font-size: 0.9rem; margin-top: 10px; display: block; opacity: 0.9; }
-
-    /* 4. 심볼 분석 섹션 */
-    .symbol-item {
-        padding: 25px;
-        background: #fff;
-        border-radius: 15px;
-        height: 100%;
-        transition: transform 0.3s ease;
-        border: 1px solid #f0f0f0;
-    }
-    .symbol-item:hover { transform: translateY(-5px); }
-    .symbol-icon {
-        font-size: 1.5rem;
-        color: black;
-        margin-bottom: 15px;
-        display: inline-block;
-    }
-
-    .lh-lg { line-height: 1.8; }
-
-
-    /* 포인트 박스 스타일 추가 */
-    .point-text {
-        background-color: #ffffff; /* 부드러운 노란색 배경 */
-        color: #20828a;           /* 진한 회색 글자색 */
-        font-weight: 700;
-        padding: 2px 8px;          /* 박스 안쪽 여백 */
-        border-radius: 5px;        /* 모서리 둥글게 */
-        display: inline-block;     /* 박스 형태 유지 */
-        line-height: 1.4;          /* 줄 간격 조절 */
-    }
-
-    /* 제목 배경색 강조 스타일 수정 */
-    .title-bg-teal {
-        background-color: #20828a;
-        color: white;
-        /* --- [수정] 글씨 크기와 여백 조정 --- */
-        font-size: 1.25rem;            /* 기존보다 작게 설정 (보통 1rem = 16px) */
-        padding: 2px 8px;           /* 위아래 여백을 줄여 박스를 슬림하게 함 */
-        /* ---------------------------------- */
-        border-radius: 4px;
-        font-weight: normal !important;
-        display: inline-block;
-        margin-bottom: 10px;
-    }
-
-        /* --- [핵심 수정] 모바일 대응 및 좌우 스크롤 제거 --- */
-    @media (max-width: 991.98px) {
-        /* 1. 전체 페이지에서 좌우 스크롤 차단 */
-        html, body {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        /* 2. 컨테이너에 좌우 여백(Padding) 추가 */
-        .bg-section {
-            padding: 40px 15px; /* 좌우 15px 여백 생성 */
-        }
-
-        /* 3. 히어로 섹션 텍스트 및 간격 조정 */
-        .tip-hero {
-            padding: 40px 15px;
-            margin-bottom: 30px;
-            margin-left: 5px;  /* 살짝 안으로 들여쓰기 */
-            margin-right: 5px;
-        }
-        .tip-hero h1 {
-            font-size: 1.8rem !important; /* 너무 큰 글자가 화면 뚫고 나가는 것 방지 */
-            word-break: keep-all;
-        }
-        .tip-hero p {
-            font-size: 0.95rem;
-            padding: 0 10px;
-        }
-
-        /* 4. 포스터 컨테이너 조정 */
-        .poster-container { position: relative; top: 0; margin-bottom: 40px; }
-        .poster-box { height: auto; max-height: 450px; }
-
-        /* 5. 부트스트랩 row의 음수 마진으로 인한 스크롤 방지 */
-        .row {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        .row > [class*="col-"] {
-            padding-left: 5px;
-            padding-right: 5px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/intro/logo.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -156,7 +11,7 @@
     <div class="text-center mb-5">
         <h1 class="display-4 fw-bold mb-3">BI Design Concept</h1>
         <p class="lead text-muted">도(道)서관의 정체성을 담은 브랜드 아이덴티티(Brand Identity)</p>
-        <hr class="mx-auto" style="width: 60px; height: 4px; background-color: var(--primary-teal); opacity: 1;">
+        <hr class="mx-auto" style="width: 60px; height: 4px; background-color: #20828a; opacity: 1;">
     </div>
 
     <div class="logo-main-box shadow-sm">
@@ -166,7 +21,7 @@
     <div class="accent-card shadow-sm">
         <h2 class="h4 fw-bold mb-3">Brand Mission</h2>
         <p class="fs-5 lh-lg mb-0">
-            도(道)서관의 로고는 <span class="point-text">안전한 주행</span>과<span class="point-text">체계적인 정보 공유</span>라는 두 가지 핵심 가치를 시각화했습니다. <br>
+            도(道)서관의 로고는 <span class="point-text">안전한 주행</span>과 <span class="point-text">체계적인 정보 공유</span>라는 두 가지 핵심 가치를 시각화했습니다. <br>
             운전자의 손길과 기술의 보호가 만나는 접점을 현대적인 심볼로 표현했습니다.
         </p>
     </div>
@@ -213,4 +68,8 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/intro/logo.js') }}"></script>
 {% endblock %}

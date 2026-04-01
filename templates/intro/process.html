@@ -3,61 +3,7 @@
 {% block title %}개발 과정 - {% endblock %}
 
 {% block style %}
-<style>
-    /* 배경 페이지 전용 스타일 (유지 및 활용) */
-    .bg-section { padding: 80px 0; }
-    
-    /* 강조 텍스트 스타일 (유지) */
-    .point-text {
-        background-color: #20828a; /* 메인 테마 색상 */
-        color: #ffffff;
-        font-weight: 700;
-        padding: 2px 8px;
-        border-radius: 5px;
-        display: inline-block;
-        line-height: 1.2;
-    }
-
-    /* 강조 카드 스타일 (유지) */
-    .accent-card {
-        border-left: 5px solid #20828a;
-        background-color: #f8f9fa;
-        padding: 30px;
-        border-radius: 0 15px 15px 0;
-    }
-
-    /* 이미지 박스 규격 고정 (유지 - 캡쳐 화면들이 깔끔하게 보임) */
-    .img-box-fixed {
-        width: 100%;
-        height: 350px; 
-        overflow: hidden;
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #e9ecef;
-        border: 1px solid #eee; /* 캡쳐화면 경계선 추가 */
-    }
-
-    /* 박스 안의 이미지가 비율을 유지하며 꽉 차게 설정 (유지) */
-    .img-box-fixed img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* 캡쳐 화면은 잘리면 안 되므로 contain으로 변경 */
-        background-color: #fff; /* contain 사용 시 여백은 흰색으로 */
-    }
-
-    /* pretandard 폰트 강제 지정 (유지) */
-    h1, h2, h3, p, span {
-        font-family: 'Pretendard', sans-serif !important;
-    }
-
-    /* 모바일 대응 (유지) */
-    @media (max-width: 991.98px) {
-        .bg-section { padding: 40px 15px; }
-        .img-box-fixed { height: 250px; } /* 모바일에서는 높이 줄임 */
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/intro/process.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -134,4 +80,8 @@
         </p>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/intro/process.js') }}"></script>
 {% endblock %}

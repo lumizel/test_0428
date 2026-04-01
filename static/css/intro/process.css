@@ -1,0 +1,55 @@
+/* 배경 페이지 전용 스타일 */
+.bg-section { padding: 80px 0 !important; }
+
+/* 강조 텍스트 스타일 */
+.point-text {
+    background-color: #20828a !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    padding: 2px 8px !important;
+    border-radius: 5px !important;
+    display: inline-block !important;
+    line-height: 1.2 !important;
+}
+
+/* 강조 카드 스타일 */
+.accent-card {
+    border-left: 5px solid #20828a !important;
+    background-color: #f8f9fa !important;
+    padding: 30px !important;
+    border-radius: 0 15px 15px 0 !important;
+}
+
+/* 이미지 박스 규격 고정 */
+.img-box-fixed {
+    width: 100% !important;
+    height: 350px !important; /* 원본 규격 유지 */
+    overflow: hidden !important;
+    border-radius: 15px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #e9ecef !important;
+    border: 1px solid #eee !important;
+}
+
+/* 박스 안의 이미지가 깨지지 않게 강제 맞춤 */
+.img-box-fixed img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important; /* 이미지 전체가 박스 안에 들어옴 */
+    background-color: #fff !important;
+}
+
+/* 폰트 지정 */
+h1, h2, h3, p, span {
+    font-family: 'Pretendard', sans-serif !important;
+}
+
+/* 모바일 대응 */
+@media (max-width: 991.98px) {
+    .bg-section { padding: 40px 15px !important; }
+    .img-box-fixed { height: 250px !important; }
+}
