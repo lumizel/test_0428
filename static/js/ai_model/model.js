@@ -39,6 +39,7 @@ let analysisLoop = null;
 let lastResult = null;
 let isAnalysisActive = false;
 let currentFile = null;
+let isProcessing = false; // [추가] 현재 분석이 진행 중인지 확인하는 플래그
 
 fileInput.onchange = function() {
     if(this.files && this.files.length > 0) {
@@ -107,12 +108,34 @@ function stopAnalysis() {
 function startAnalysis() {
     if (analysisLoop) return;
     isAnalysisActive = true;
+
+    // [추가] 분석 시작 시 영상 속도를 0.5배속으로 늦춤 (지연 현상 보정용)
+    if (videoPlayer) {
+        videoPlayer.playbackRate = 0.8;
+    }
+
     analysisLoop = setInterval(() => {
-        if (!videoPlayer.paused && !videoPlayer.ended && isAnalysisActive) {
+        if (!videoPlayer.paused && !videoPlayer.ended && isAnalysisActive && !isProcessing) {
             analyzeFrame(videoPlayer);
         }
     }, 500);
 }
+
+// [추가] 분석이 완전히 끝났을 때 속도를 다시 1.0으로 복구하는 부분
+videoPlayer.onended = () => {
+    videoPlayer.playbackRate = 1.0; // 속도 복구
+    if (isAnalysisActive) {
+        stopAnalysis();
+        progressBar.style.transition = 'width 0.3s ease-in-out';
+        progressBar.style.width = "100%";
+        statusText.innerText = "분석 완료!";
+        progressBar.classList.remove('progress-bar-animated');
+        if(saveCloudBtn) saveCloudBtn.disabled = false;
+    } else {
+        playBtn.style.display = 'block';
+        playIcon.className = 'bi bi-play-circle-fill';
+    }
+};
 
 document.getElementById('uploadForm').onsubmit = async function(e) {
     e.preventDefault();
@@ -168,9 +191,15 @@ videoPlayer.onended = () => {
 
 function analyzeFrame(mediaElement) {
     return new Promise((resolve) => {
+        isProcessing = true;
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = (mediaElement.tagName === 'VIDEO') ? mediaElement.videoWidth : mediaElement.naturalWidth;
-        tempCanvas.height = (mediaElement.tagName === 'VIDEO') ? mediaElement.videoHeight : mediaElement.naturalHeight;
+
+        // [수정] 640px도 무겁습니다. CPU 환경이면 320px까지 줄여보세요.
+        const scale = Math.min(1, 320 / Math.max(mediaElement.videoWidth || mediaElement.naturalWidth, 1));
+
+        tempCanvas.width = (mediaElement.videoWidth || mediaElement.naturalWidth) * scale;
+        tempCanvas.height = (mediaElement.videoHeight || mediaElement.naturalHeight) * scale;
+
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.drawImage(mediaElement, 0, 0, tempCanvas.width, tempCanvas.height);
 
@@ -183,10 +212,14 @@ function analyzeFrame(mediaElement) {
                 if (result.success) {
                     lastResult = result.detections;
                     accumulateData(result);
-                    drawBoundingBoxes(result.detections);
+                    drawBoundingBoxes(result.detections); // 좌표는 비율(xyxyn)이므로 작게 보내도 박스 위치는 맞습니다.
                 }
-            } catch (err) { console.error(err); } finally { resolve(); }
-        }, 'image/jpeg', 0.7);
+            } catch (err) { console.error(err); }
+            finally {
+                isProcessing = false;
+                resolve();
+            }
+        }, 'image/jpeg', 0.4); // 압축률도 더 낮춤
     });
 }
 
