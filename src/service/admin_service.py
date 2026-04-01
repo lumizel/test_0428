@@ -111,8 +111,9 @@ def members():
 @admin_required
 def posts():
     search_q        = request.args.get('q', '').strip()
-    filter_category = request.args.get('category', '')
-    filter_status   = request.args.get('status', '')
+    filter_category = request.args.get('category', '')   # free / qna / info
+    filter_type     = request.args.get('type', '')        # notice / normal
+    filter_status   = request.args.get('status', '')      # normal / reported / hidden
     page            = max(int(request.args.get('page', 1)), 1)
 
     all_boards = AdminService.get_boards()
@@ -130,9 +131,11 @@ def posts():
                     if q in (b['title'] or '').lower()
                     or q in (b['author'] or '').lower()
                     or q in (b['nickname'] or '').lower()]
-    if filter_category == 'notice':
+    if filter_category:
+        filtered = [b for b in filtered if (b['category'] or '') == filter_category]
+    if filter_type == 'notice':
         filtered = [b for b in filtered if b['is_pinned']]
-    elif filter_category == 'normal':
+    elif filter_type == 'normal':
         filtered = [b for b in filtered if not b['is_pinned']]
     if filter_status:
         filtered = [b for b in filtered if _status(b) == filter_status]
@@ -150,6 +153,7 @@ def posts():
         'total_pages':      total_pages,
         'search_q':         search_q,
         'filter_category':  filter_category,
+        'filter_type':      filter_type,
         'filter_status':    filter_status,
     })
     return render_template('admin/posts.html', **ctx)
@@ -192,12 +196,39 @@ def add_member():
 @admin_bp.route('/member/update/<int:member_id>', methods=['POST'])
 @admin_required
 def update_member(member_id):
+    current_role = session.get('user_role')
+    role = request.form.get('role')
+
+    conn = Session.get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT role FROM members WHERE id=%s", (member_id,))
+            row = cursor.fetchone()
+            target_role = row['role'] if row else None
+    except Exception as e:
+        print(f"update_member role check 오류: {e}")
+        target_role = None
+
+    # 최고 관리자 회원은 수정 불가 (role, active 모두)
+    if target_role == 'admin':
+        return ('', 403) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+            else redirect(url_for('admin.members'))
+
+    # admin 등급으로 임명 시도 차단 (admin만 가능하더라도 임명 자체 불가)
+    if role == 'admin':
+        return ('', 403) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+            else redirect(url_for('admin.members'))
+
+    # manager는 등급 변경 불가 — name/nickname/password/active만 허용
+    if current_role == 'manager':
+        role = target_role  # 기존 role 유지
+
     success = AdminService.update_member(
         member_id,
         request.form.get('name'),
         request.form.get('nickname'),
         request.form.get('password'),
-        request.form.get('role'),
+        role,
         request.form.get('active'),
         request.form.get('birthdate') or None,
     )
@@ -206,7 +237,7 @@ def update_member(member_id):
     else:
         flash('❌ 수정 중 오류가 발생했습니다.', 'danger')
     return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
-           else redirect(url_for('admin.members'))
+        else redirect(url_for('admin.members'))
 
 
 @admin_bp.route('/member/delete/<int:member_id>', methods=['POST'])
@@ -220,6 +251,61 @@ def delete_member(member_id):
     return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
            else redirect(url_for('admin.members'))
 
+
+# ──────────────────────────────────────────────
+#  회원 상세 페이지
+# ──────────────────────────────────────────────
+@admin_bp.route('/members/<int:member_id>/detail')
+@admin_required
+def member_detail(member_id):
+    member = AdminService.get_member_detail(member_id)
+    if not member:
+        flash('존재하지 않는 회원입니다.', 'danger')
+        return redirect(url_for('admin.members'))
+
+    tab = request.args.get('tab', 'boards')
+    page = max(int(request.args.get('page', 1)), 1)
+
+    data, total_pages = AdminService.get_member_tab_data(member_id, tab, page)
+
+    # 통계
+    stats = AdminService.get_member_stats(member_id)
+
+    all_members = AdminService.get_members()
+    all_boards = AdminService.get_boards()
+    ctx = _sidebar_context(all_members, all_boards)
+    ctx.update({
+        'active_nav': 'members',
+        'member': member,
+        'stats': stats,
+        'tab': tab,
+        'tab_data': data,
+        'page': page,
+        'total_pages': total_pages,
+    })
+    return render_template('admin/member_detail.html', **ctx)
+
+
+# ──────────────────────────────────────────────
+#  회원 상세 - 게시글 삭제
+# ──────────────────────────────────────────────
+@admin_bp.route('/members/<int:member_id>/board/<int:board_id>/delete', methods=['POST'])
+@admin_required
+def delete_member_board(member_id, board_id):
+    AdminService.delete_board_by_admin(board_id)
+    return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+        else redirect(url_for('admin.member_detail', member_id=member_id, tab='boards'))
+
+
+# ──────────────────────────────────────────────
+#  회원 상세 - 댓글 삭제
+# ──────────────────────────────────────────────
+@admin_bp.route('/members/<int:member_id>/comment/<int:comment_id>/delete', methods=['POST'])
+@admin_required
+def delete_member_comment(member_id, comment_id):
+    AdminService.delete_comment_by_admin(comment_id)
+    return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+        else redirect(url_for('admin.member_detail', member_id=member_id, tab='comments'))
 
 # ──────────────────────────────────────────────
 #  게시글 액션
@@ -252,6 +338,13 @@ def unreport_board(board_id):
 @admin_required
 def pin_board(board_id):
     AdminService.set_board_pinned(board_id, 1)
+    return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+           else redirect(url_for('admin.posts'))
+
+@admin_bp.route('/board/unpin/<int:board_id>', methods=['POST'])
+@admin_required
+def unpin_board(board_id):
+    AdminService.set_board_pinned(board_id, 0)
     return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
            else redirect(url_for('admin.posts'))
 
@@ -377,7 +470,7 @@ class AdminService:
                 cursor.execute("""
                     SELECT
                         b.id, b.title, b.created_at, b.visits,
-                        b.active, b.is_pinned,
+                        b.active, b.is_pinned, b.category,
                         m.name     AS author,
                         m.nickname AS nickname,
                         COUNT(r.id) AS report_count
@@ -385,7 +478,7 @@ class AdminService:
                     LEFT JOIN members m ON b.member_id = m.id
                     LEFT JOIN reports r ON r.board_id  = b.id
                     GROUP BY b.id, b.title, b.created_at, b.visits,
-                             b.active, b.is_pinned, m.name, m.nickname
+                             b.active, b.is_pinned, b.category, m.name, m.nickname
                     ORDER BY b.created_at DESC
                 """)
                 return cursor.fetchall()
@@ -526,3 +619,177 @@ class AdminService:
         except Exception as e:
             print(f"get_visitor_stats() 오류: {e}")
             return {'total': 0, 'logged_in': 0, 'anonymous': 0} if range_type == 'today' else []
+
+    # ──────────────────────────────────────────────
+    #  회원 상세 - 휴지통 영구삭제
+    # ──────────────────────────────────────────────
+    @admin_bp.route('/members/<int:member_id>/trash/<int:board_id>/delete', methods=['POST'])
+    @admin_required
+    def delete_member_trash(member_id, board_id):
+        AdminService.delete_board_permanent(board_id)
+        return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+            else redirect(url_for('admin.member_detail', member_id=member_id, tab='trash'))
+
+    # ──────────────────────────────────────────────
+    #  AdminService 추가 메서드들
+    # ──────────────────────────────────────────────
+
+    @classmethod
+    def get_member_detail(cls, member_id):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM members WHERE id=%s", (member_id,))
+                return cursor.fetchone()
+        except Exception as e:
+            print(f"get_member_detail() 오류: {e}")
+            return None
+
+    @classmethod
+    def get_member_stats(cls, member_id):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT
+                        (SELECT COUNT(*) FROM boards
+                         WHERE member_id=%s AND deleted_at IS NULL AND active=1) AS board_count,
+                        (SELECT COUNT(*) FROM board_comments
+                         WHERE member_id=%s)                                      AS comment_count,
+                        (SELECT COUNT(*) FROM follows
+                         WHERE following_id=%s)                                   AS follower_count,
+                        (SELECT COUNT(*) FROM follows
+                         WHERE follower_id=%s)                                    AS following_count
+                """, (member_id, member_id, member_id, member_id))
+                return cursor.fetchone()
+        except Exception as e:
+            print(f"get_member_stats() 오류: {e}")
+            return {'board_count': 0, 'comment_count': 0, 'follower_count': 0, 'following_count': 0}
+
+    @classmethod
+    def get_member_tab_data(cls, member_id, tab, page, page_size=10):
+        conn = Session.get_connection()
+        offset = (page - 1) * page_size
+        try:
+            with conn.cursor() as cursor:
+                if tab == 'boards':
+                    cursor.execute("SELECT COUNT(*) AS cnt FROM boards WHERE member_id=%s AND deleted_at IS NULL",
+                                   (member_id,))
+                    total = cursor.fetchone()['cnt']
+                    cursor.execute("""
+                        SELECT id, title, category, is_pinned, visits, created_at, active
+                        FROM boards
+                        WHERE member_id=%s AND deleted_at IS NULL
+                        ORDER BY created_at DESC
+                        LIMIT %s OFFSET %s
+                    """, (member_id, page_size, offset))
+
+                elif tab == 'comments':
+                    cursor.execute("SELECT COUNT(*) AS cnt FROM board_comments WHERE member_id=%s", (member_id,))
+                    total = cursor.fetchone()['cnt']
+                    cursor.execute("""
+                        SELECT c.id, c.content, c.created_at, b.title AS board_title, b.id AS board_id
+                        FROM board_comments c
+                        LEFT JOIN boards b ON c.board_id = b.id
+                        WHERE c.member_id=%s
+                        ORDER BY c.created_at DESC
+                        LIMIT %s OFFSET %s
+                    """, (member_id, page_size, offset))
+
+                elif tab == 'trash':
+                    cursor.execute(
+                        "SELECT COUNT(*) AS cnt FROM boards WHERE member_id=%s AND deleted_at IS NOT NULL",
+                        (member_id,))
+                    total = cursor.fetchone()['cnt']
+                    cursor.execute("""
+                        SELECT id, title, category, deleted_at
+                        FROM boards
+                        WHERE member_id=%s AND deleted_at IS NOT NULL
+                        ORDER BY deleted_at DESC
+                        LIMIT %s OFFSET %s
+                    """, (member_id, page_size, offset))
+
+                elif tab == 'follows':
+                    cursor.execute("SELECT COUNT(*) AS cnt FROM follows WHERE follower_id=%s", (member_id,))
+                    total = cursor.fetchone()['cnt']
+                    cursor.execute("""
+                        SELECT m.id, m.nickname, m.name, m.profile_img, f.created_at
+                        FROM follows f
+                        JOIN members m ON f.following_id = m.id
+                        WHERE f.follower_id=%s
+                        ORDER BY f.created_at DESC
+                        LIMIT %s OFFSET %s
+                    """, (member_id, page_size, offset))
+
+                elif tab == 'followers':
+                    cursor.execute("SELECT COUNT(*) AS cnt FROM follows WHERE following_id=%s", (member_id,))
+                    total = cursor.fetchone()['cnt']
+                    cursor.execute("""
+                        SELECT m.id, m.nickname, m.name, m.profile_img, f.created_at
+                        FROM follows f
+                        JOIN members m ON f.follower_id = m.id
+                        WHERE f.following_id=%s
+                        ORDER BY f.created_at DESC
+                        LIMIT %s OFFSET %s
+                    """, (member_id, page_size, offset))
+
+                elif tab == 'blocks':
+                    cursor.execute("SELECT COUNT(*) AS cnt FROM blocks WHERE blocker_id=%s", (member_id,))
+                    total = cursor.fetchone()['cnt']
+                    cursor.execute("""
+                        SELECT m.id, m.nickname, m.name, m.profile_img, b.created_at
+                        FROM blocks b
+                        JOIN members m ON b.blocked_id = m.id
+                        WHERE b.blocker_id=%s
+                        ORDER BY b.created_at DESC
+                        LIMIT %s OFFSET %s
+                    """, (member_id, page_size, offset))
+
+                else:
+                    return [], 1
+
+                rows = cursor.fetchall()
+                total_pages = max((total + page_size - 1) // page_size, 1)
+                return rows, total_pages
+        except Exception as e:
+            print(f"get_member_tab_data() 오류: {e}")
+            return [], 1
+
+    @classmethod
+    def delete_board_by_admin(cls, board_id):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE boards SET active=0 WHERE id=%s", (board_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"delete_board_by_admin() 오류: {e}")
+            conn.rollback()
+            return False
+
+    @classmethod
+    def delete_comment_by_admin(cls, comment_id):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM board_comments WHERE id=%s", (comment_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"delete_comment_by_admin() 오류: {e}")
+            conn.rollback()
+            return False
+
+    @classmethod
+    def delete_board_permanent(cls, board_id):
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM boards WHERE id=%s", (board_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"delete_board_permanent() 오류: {e}")
+            conn.rollback()
+            return False

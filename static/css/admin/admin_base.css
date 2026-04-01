@@ -13,6 +13,8 @@
     --danger: #e74c3c;
     --warning: #f39c12;
     --success: #27ae60;
+    --blue: #0d6efd;
+    --indigo: #6610f2;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -160,6 +162,8 @@ body {
 .badge-pending  { background: rgba(243,156,18,0.12);  color: var(--warning); }
 .badge-banned   { background: rgba(231,76,60,0.12);   color: var(--danger); }
 .badge-notice   { background: rgba(32,130,138,0.12);  color: var(--teal); }
+.badge-info     { background: rgba(13, 110, 253, 0.12);color: var(--blue); }
+.badge-qna      { background: rgba(102, 16, 242, 0.12);color: var(--indigo); }
 .badge-review   { background: rgba(108,117,125,0.1);  color: #555; }
 
 /* ===== ACTION BUTTONS ===== */

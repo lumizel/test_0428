@@ -1,0 +1,106 @@
+/* ===== 회원 상세 ===== */
+.member-card {
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 24px;
+}
+.member-avatar-lg {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--teal-light);
+    flex-shrink: 0;
+}
+.member-avatar-lg.placeholder {
+    background: var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 2rem; font-weight: 800;
+}
+.member-info { flex: 1; }
+.member-info .m-name     { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+.member-info .m-nickname { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; margin-bottom: 10px; }
+.member-info .m-meta     { display: flex; gap: 16px; flex-wrap: wrap; }
+.member-info .m-meta span { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.stat-mini {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    text-align: center;
+}
+.stat-mini .s-label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+.stat-mini .s-value { font-size: 1.5rem; font-weight: 800; }
+
+/* ===== TABS ===== */
+.tab-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0;
+}
+.tab-btn {
+    padding: 10px 20px;
+    border: none; background: none;
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.88rem; font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+.tab-btn:hover  { color: var(--teal); }
+.tab-btn.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+/* ===== 뒤로가기 ===== */
+.back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text-muted); font-size: 0.85rem; font-weight: 600;
+    text-decoration: none; margin-bottom: 20px;
+    transition: 0.15s;
+}
+.back-btn:hover { color: var(--teal); }
+
+/* ===== 유저 미니 카드 (팔로우/차단 탭) ===== */
+.user-mini {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: 0.15s;
+}
+.user-mini:last-child { border-bottom: none; }
+.user-mini:hover { background: #f8fffe; }
+.user-mini-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%; object-fit: cover;
+    background: var(--teal-light);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.85rem; color: var(--teal);
+    flex-shrink: 0;
+}
+.user-mini-info .u-name     { font-size: 0.88rem; font-weight: 700; }
+.user-mini-info .u-nickname { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+
+@media (max-width: 768px) {
+    .member-card  { flex-direction: column; align-items: flex-start; gap: 20px; padding: 20px; }
+    .stats-row    { grid-template-columns: repeat(2, 1fr); }
+    .tab-btn      { padding: 8px 12px; font-size: 0.8rem; }
+}
+
+/* admin_base.css의 td:last-child left 오버라이드 */
+.admin-detail-table td:last-child { text-align: center; }

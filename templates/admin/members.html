@@ -46,7 +46,7 @@
                     <th style="width:70px;">등급</th>
                     <th style="width:100px;">가입일</th>
                     <th style="width:70px;">상태</th>
-                    <th style="width:160px;min-width:160px;">관리</th>
+                    <th style="width:200px;min-width:200px;">관리</th>
                 </tr>
             </thead>
             <tbody>
@@ -74,17 +74,20 @@
                         {% endif %}
                     </td>
                     <td style="white-space:nowrap;">
-                        <button class="action-btn" onclick="openEditMemberModal(
-                            '{{ member['id'] }}',
-                            '{{ member['name'] }}',
-                            '{{ member['nickname'] or '' }}',
-                            '{{ member['role'] }}',
-                            {{ member['active'] }},
-                            '{{ member['birthdate'] or '' }}'
-                        )">수정</button>
-                        <button class="action-btn danger"
-                                onclick="openToggleConfirm('{{ member['id'] }}', '{{ member['name'] }}')">활성여부</button>
-                    </td>
+    <button class="action-btn"
+            onclick="location.href='{{ url_for('admin.member_detail', member_id=member['id']) }}'">상세</button>
+    <button class="action-btn" onclick="openEditMemberModal(
+        '{{ member['id'] }}',
+        '{{ member['name'] }}',
+        '{{ member['nickname'] or '' }}',
+        '{{ member['role'] }}',
+        {{ member['active'] }},
+        '{{ member['birthdate'] or '' }}'
+    )">수정</button>
+    <button class="action-btn danger"
+            onclick="openToggleConfirm('{{ member['id'] }}', '{{ member['name'] }}', '{{ member['role'] }}')">활성여부</button>
+</td>
+
                 </tr>
                 {% else %}
                 <tr>
@@ -171,8 +174,8 @@
                 <select class="modal-input" name="role" id="edit_role">
                     <option value="user">미 (일반)</option>
                     <option value="manager">레 (매니저)</option>
-                    <option value="admin">도 (관리자)</option>
                 </select>
+                <input type="hidden" name="role" id="edit_role_hidden" disabled>
             </div>
             <div class="modal-field">
                 <label class="modal-label">상태</label>
@@ -189,6 +192,7 @@
                 <button type="button" class="topbar-btn" onclick="closeEditMemberModal()">취소</button>
                 <button type="submit" class="topbar-btn primary">저장</button>
             </div>
+            <input type="hidden" id="current_user_role" value="{{ current_user_role }}">
         </form>
     </div>
 </div>

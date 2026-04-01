@@ -1,0 +1,330 @@
+{% extends "admin/base.html" %}
+
+{% block title %}도(道)서관 — 회원 상세{% endblock %}
+{% block topbar_title %}👤 회원 상세{% endblock %}
+
+{% block extra_style %}
+<link rel="stylesheet" href="/static/css/admin/admin_member_detail.css">
+{% endblock %}
+
+{% block content %}
+
+<!-- 뒤로가기 -->
+<a href="{{ url_for('admin.members') }}" class="back-btn">← 회원 목록으로</a>
+
+<!-- 회원 카드 -->
+<div class="member-card">
+    {% if member['profile_img'] %}
+        <img src="{{ member['profile_img'] }}" class="member-avatar-lg" alt="프로필">
+    {% else %}
+        <div class="member-avatar-lg placeholder">
+            {{ member['name'][0] if member['name'] else '?' }}
+        </div>
+    {% endif %}
+    <div class="member-info">
+        <div class="m-name">{{ member['name'] }}</div>
+        <div class="m-nickname">@{{ member['nickname'] or '닉네임 없음' }}</div>
+        <div class="m-meta">
+            <span>
+                {% if member['role'] == 'admin' %}
+                    <span class="badge" style="background:#dc3545;color:#fff">도</span>
+                {% elif member['role'] == 'manager' %}
+                    <span class="badge" style="background:#fd8a69;color:#000">레</span>
+                {% else %}
+                    <span class="badge" style="background:#b8e5e0;color:#20828a">미</span>
+                {% endif %}
+            </span>
+            <span>가입일 {{ member['created_at'].strftime('%Y.%m.%d') }}</span>
+            <span>
+                {% if member['active'] == 1 %}
+                    <span class="badge badge-active">활성</span>
+                {% else %}
+                    <span class="badge badge-inactive">비활성</span>
+                {% endif %}
+            </span>
+            <span>UID: {{ member['uid'] }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- 통계 -->
+<div class="stats-row">
+    <div class="stat-mini">
+        <div class="s-label">게시글</div>
+        <div class="s-value">{{ stats['board_count'] }}</div>
+    </div>
+    <div class="stat-mini">
+        <div class="s-label">댓글</div>
+        <div class="s-value">{{ stats['comment_count'] }}</div>
+    </div>
+    <div class="stat-mini">
+        <div class="s-label">팔로워</div>
+        <div class="s-value">{{ stats['follower_count'] }}</div>
+    </div>
+    <div class="stat-mini">
+        <div class="s-label">팔로잉</div>
+        <div class="s-value">{{ stats['following_count'] }}</div>
+    </div>
+</div>
+
+<!-- 탭 네비 -->
+<div class="tab-nav">
+    <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab='boards') }}"
+       class="tab-btn {% if tab == 'boards' %}active{% endif %}">📝 게시글</a>
+    <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab='comments') }}"
+       class="tab-btn {% if tab == 'comments' %}active{% endif %}">💬 댓글</a>
+    <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab='trash') }}"
+       class="tab-btn {% if tab == 'trash' %}active{% endif %}">🗑️ 휴지통</a>
+    <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab='follows') }}"
+       class="tab-btn {% if tab == 'follows' %}active{% endif %}">👥 팔로잉</a>
+    <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab='followers') }}"
+       class="tab-btn {% if tab == 'followers' %}active{% endif %}">🫂 팔로워</a>
+    <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab='blocks') }}"
+       class="tab-btn {% if tab == 'blocks' %}active{% endif %}">🚫 차단</a>
+</div>
+
+<!-- 탭 콘텐츠 -->
+<div class="panel">
+
+    <!-- 게시글 탭 -->
+    {% if tab == 'boards' %}
+    <div class="table-scroll-wrap">
+        <table class="data-table" style="min-width:600px;">
+            <thead>
+                <tr>
+                    <th style="width:60px;">번호</th>
+                    <th style="width:80px;">카테고리</th>
+                    <th style="width:200px;text-align:left;">제목</th>
+                    <th style="width:90px;">작성일</th>
+                    <th style="width:70px;">조회수</th>
+                    <th style="width:80px;">상태</th>
+                    <th style="width:80px;">관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in tab_data %}
+                <tr>
+                    <td>{{ b['id'] }}</td>
+                    <td>
+                        {% if b['category'] == 'free' %}
+                            <span class="badge badge-notice">자유</span>
+                        {% elif b['category'] == 'info' %}
+                            <span class="badge badge-info">정보</span>
+                        {% else %}
+                            <span class="badge badge-qna">Q&A</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">
+                        <strong>{{ b['title'] }}</strong>
+                        {% if b['is_pinned'] %}<span class="badge badge-notice" style="margin-left:6px;">공지</span>{% endif %}
+                    </td>
+                    <td>{{ b['created_at'].strftime('%Y.%m.%d') }}</td>
+                    <td>{{ b['visits'] }}</td>
+                    <td>
+                        {% if b['active'] %}
+                            <span class="badge badge-active">정상</span>
+                        {% else %}
+                            <span class="badge badge-inactive">숨김</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        {% if b['active'] %}
+                        <button class="action-btn danger"
+                                onclick="hideBoard({{ member['id'] }}, {{ b['id'] }})">숨김</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:30px">게시글이 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 댓글 탭 -->
+    {% elif tab == 'comments' %}
+    <div class="table-scroll-wrap">
+        <table class="data-table" style="min-width:600px;">
+            <thead>
+                <tr>
+                    <th style="width:60px;">번호</th>
+                    <th style="width:180px;text-align:left;">내용</th>
+                    <th style="width:160px;text-align:left;">게시글</th>
+                    <th style="width:90px;">작성일</th>
+                    <th style="width:80px;">관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in tab_data %}
+                <tr>
+                    <td>{{ c['id'] }}</td>
+                    <td style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">
+                        {{ c['content'] }}
+                    </td>
+                    <td style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;color:var(--text-muted);">
+                        {{ c['board_title'] or '(삭제된 게시글)' }}
+                    </td>
+                    <td>{{ c['created_at'].strftime('%Y.%m.%d') }}</td>
+                    <td style="text-align:center;">
+                        <button class="action-btn danger"
+                                onclick="deleteComment({{ member['id'] }}, {{ c['id'] }})">삭제</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:30px">댓글이 없습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 휴지통 탭 -->
+    {% elif tab == 'trash' %}
+    <div class="table-scroll-wrap">
+        <table class="data-table" style="min-width:500px;">
+            <thead>
+                <tr>
+                    <th style="width:60px;">번호</th>
+                    <th style="width:80px;">카테고리</th>
+                    <th style="width:200px;text-align:left">제목</th>
+                    <th style="width:110px;">삭제일</th>
+                    <th style="width:100px;">관리</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in tab_data %}
+                <tr>
+                    <td>{{ b['id'] }}</td>
+                    <td>
+                        {% if b['category'] == 'free' %}
+                            <span class="badge badge-notice">자유</span>
+                        {% elif b['category'] == 'info' %}
+                            <span class="badge badge-info">정보</span>
+                        {% elif b['category'] == 'qna' %}
+                            <span class="badge badge-qna">Q&A</span>
+                        {% else %}
+                            <span class="badge badge-review">{{ b['category'] or '-' }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;">
+                        <strong>{{ b['title'] }}</strong>
+                    </td>
+                    <td>{{ b['deleted_at'].strftime('%Y.%m.%d') }}</td>
+                    <td style="text-align:center;">
+                        <button class="action-btn danger"
+                                onclick="deleteTrash({{ member['id'] }}, {{ b['id'] }})">영구삭제</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:30px">휴지통이 비어있습니다.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 팔로잉 탭 -->
+    {% elif tab == 'follows' %}
+    <div>
+        {% for f in tab_data %}
+        <div class="user-mini">
+            <div class="user-mini-avatar">
+                {% if f['profile_img'] %}
+                    <img src="{{ f['profile_img'] }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" alt="">
+                {% else %}
+                    {{ f['name'][0] if f['name'] else '?' }}
+                {% endif %}
+            </div>
+            <div class="user-mini-info">
+                <div class="u-name">{{ f['name'] }}</div>
+                <div class="u-nickname">@{{ f['nickname'] or '-' }}</div>
+            </div>
+            <div style="margin-left:auto;font-size:.75rem;color:var(--text-muted);">
+                {{ f['created_at'].strftime('%Y.%m.%d') }}
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:var(--text-muted);padding:40px;font-size:.88rem;font-weight:600;">
+            팔로잉 목록이 없습니다.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 팔로워 탭 -->
+        {% elif tab == 'followers' %}
+    <div>
+        {% for f in tab_data %}
+        <div class="user-mini">
+            <div class="user-mini-avatar">
+                {% if f['profile_img'] %}
+                    <img src="{{ f['profile_img'] }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" alt="">
+                {% else %}
+                    {{ f['name'][0] if f['name'] else '?' }}
+                {% endif %}
+            </div>
+            <div class="user-mini-info">
+                <div class="u-name">{{ f['name'] }}</div>
+                <div class="u-nickname">@{{ f['nickname'] or '-' }}</div>
+            </div>
+            <div style="margin-left:auto;font-size:.75rem;color:var(--text-muted);">
+                {{ f['created_at'].strftime('%Y.%m.%d') }}
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:var(--text-muted);padding:40px;font-size:.88rem;font-weight:600;">
+            팔로워가 없습니다.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 차단 탭 -->
+    {% elif tab == 'blocks' %}
+    <div>
+        {% for b in tab_data %}
+        <div class="user-mini">
+            <div class="user-mini-avatar">
+                {% if b['profile_img'] %}
+                    <img src="{{ b['profile_img'] }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" alt="">
+                {% else %}
+                    {{ b['name'][0] if b['name'] else '?' }}
+                {% endif %}
+            </div>
+            <div class="user-mini-info">
+                <div class="u-name">{{ b['name'] }}</div>
+                <div class="u-nickname">@{{ b['nickname'] or '-' }}</div>
+            </div>
+            <div style="margin-left:auto;font-size:.75rem;color:var(--text-muted);">
+                {{ b['created_at'].strftime('%Y.%m.%d') }}
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;color:var(--text-muted);padding:40px;font-size:.88rem;font-weight:600;">
+            차단 목록이 없습니다.
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- 페이지네이션 -->
+{% if total_pages > 1 %}
+<div class="pagination-wrap">
+    {% if page > 1 %}
+        <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab=tab, page=page-1) }}"
+           class="page-btn">‹</a>
+    {% endif %}
+    {% for p in range(1, total_pages + 1) %}
+        <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab=tab, page=p) }}"
+           class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+    {% endfor %}
+    {% if page < total_pages %}
+        <a href="{{ url_for('admin.member_detail', member_id=member['id'], tab=tab, page=page+1) }}"
+           class="page-btn">›</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin/admin_member_detail.js"></script>
+{% endblock %}

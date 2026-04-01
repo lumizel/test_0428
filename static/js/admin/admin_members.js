@@ -10,11 +10,44 @@ function openEditMemberModal(id, name, nickname, role, active, birthdate) {
     document.getElementById('edit_role').value      = role;
     document.getElementById('edit_active').value    = String(active);
     document.getElementById('edit_birthdate').value = birthdate;
+
+    const roleSelect   = document.getElementById('edit_role');
+    const roleHidden   = document.getElementById('edit_role_hidden');
+    const activeSelect = document.getElementById('edit_active');
+    const currentRole  = document.getElementById('current_user_role').value;
+
+    // 등급 select 처리
+    // - 대상이 admin이거나, 현재 로그인 유저가 manager면 등급 변경 불가
+    const roleDisabled = (role === 'admin') || (currentRole === 'manager');
+    if (roleDisabled) {
+        roleSelect.setAttribute('disabled', true);
+        roleHidden.value    = role;
+        roleHidden.disabled = false;
+    } else {
+        roleSelect.removeAttribute('disabled');
+        roleHidden.disabled = true;
+    }
+
+    // active select 처리
+    // - 대상이 admin이면 활성여부 변경 불가
+    if (role === 'admin') {
+        activeSelect.setAttribute('disabled', true);
+        activeSelect.title = '최고 관리자의 활성 상태는 변경할 수 없습니다.';
+    } else {
+        activeSelect.removeAttribute('disabled');
+        activeSelect.title = '';
+    }
+
     document.getElementById('editMemberModal').classList.add('open');
 }
 function closeEditMemberModal() { document.getElementById('editMemberModal').classList.remove('open'); }
 
-function openToggleConfirm(id, name) {
+function openToggleConfirm(id, name, role) {
+    // admin 회원은 활성여부 변경 불가
+    if (role === 'admin') {
+        showToast('❌ 최고 관리자의 활성 상태는 변경할 수 없습니다.', 'error');
+        return;
+    }
     document.getElementById('toggleForm').action = `/admin/member/delete/${id}`;
     document.getElementById('toggle-confirm-desc').innerHTML =
         `<strong>${name}</strong> 회원을 변경하시겠습니까?<br>신중한 선택 바랍니다.`;
@@ -29,15 +62,25 @@ document.getElementById('addMemberForm').addEventListener('submit', async functi
     if (res.ok) { closeAddMemberModal(); showToast('✅ 회원이 추가되었습니다.'); location.reload(); }
     else showToast('❌ 추가 실패', 'error');
 });
+
 document.getElementById('editMemberForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const res = await fetch(this.action, { method:'POST', body: new FormData(this) });
+    if (res.status === 403) {
+        showToast('❌ 권한이 없습니다.', 'error');
+        return;
+    }
     if (res.ok) { closeEditMemberModal(); showToast('✅ 수정되었습니다.'); location.reload(); }
     else showToast('❌ 수정 실패', 'error');
 });
+
 document.getElementById('toggleForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const res = await fetch(this.action, { method:'POST', body: new FormData(this) });
+    if (res.status === 403) {
+        showToast('❌ 권한이 없습니다.', 'error');
+        return;
+    }
     if (res.ok) { closeToggleConfirm(); showToast('✅ 변경되었습니다.'); location.reload(); }
     else showToast('❌ 변경 실패', 'error');
 });
