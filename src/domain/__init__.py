@@ -1,8 +1,15 @@
 from src.domain.Member import Member
-from src.domain.Board import Board
-#    최상위 패키지 파일명       클래스명
+from src.domain.board import Board
+from src.domain.comment import Comment
+from src.domain.file import File, AllowedExtension, MAX_FILE_SIZE
+from src.domain.report import Report, ReportReason, ReportSummary, REPORT_BLOCK_THRESHOLD
+from src.domain.scrap import Scrap
 
-# 차후에 Member외적으로 Board, Score, Item 등 처리해야함
-# 사용법 service나 상위 패키지에서 from src.domain import *
-# __all__ 리스트에 있는 항목이 전체 import됨
-__all__ = ['Member', 'Board', 'models']
+__all__ = [
+    'Member',
+    'board.py',
+    'Comment',
+    'File', 'AllowedExtension', 'MAX_FILE_SIZE',
+    'Report', 'ReportReason', 'ReportSummary', 'REPORT_BLOCK_THRESHOLD',
+    'Scrap',
+]

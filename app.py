@@ -22,13 +22,16 @@ from src.service import (
     auth_bp,
     mypage_bp,
     introduce_bp,
-    board_bp,
     admin_bp,
     faq_bp,
     tip_bp,
     model_bp,
     profile_bp
     # 여기 아래에 계속 추가하기
+)
+
+from src.controller import (
+    board_bp
 )
 # FIXME end
 
