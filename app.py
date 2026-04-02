@@ -22,7 +22,6 @@ from src.service import (
     mypage_bp,
     introduce_bp,
     admin_bp,
-    faq_bp,
     tip_bp,
     model_bp,
     profile_bp
@@ -32,6 +31,7 @@ from src.service import (
 from src.controller import (
     auth_bp,
     board_bp,
+    faq_bp,
 )
 # FIXME end
 
