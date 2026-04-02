@@ -13,7 +13,7 @@ from flask_caching import Cache
 from flask import Flask, render_template
 
 # 공통 모듈
-from src.common import init_app
+from src.common import init_app, log_system
 
 # 서비스 모듈
 # FIXME : 반드시 이 부분만 수정해주세요.
@@ -48,6 +48,7 @@ init_app(app)
 # 메인 페이지 라우트
 @app.route('/')
 def index():
+    log_system('VISIT','INFO','PAGE_VIEW','/')
     return render_template('main.html')
 
 @app.errorhandler(404)

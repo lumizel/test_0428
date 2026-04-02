@@ -226,7 +226,6 @@ def board_view(board_id):
     if not row:
         return '<script>alert("존재하지 않는 게시글입니다."); history.back();</script>'
 
-    print(row)
     # 🚩 [신규 추가] 신고 5개 이상 차단 로직 (관리자는 통과)
     if row['report_count'] >= 5:
         if session.get('user_role') != 'admin':

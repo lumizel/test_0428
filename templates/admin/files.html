@@ -1,0 +1,59 @@
+{% extends "admin/base.html" %}
+
+{% block title %}도(道)서관 — AI 자료실{% endblock %}
+{% block topbar_title %}📂 AI 자료실{% endblock %}
+
+{% block extra_style %}
+<link rel="stylesheet" href="/static/css/admin/admin_files.css">
+{% endblock %}
+
+{% block content %}
+<div class="section-title">AI 자료실</div>
+<div class="section-sub">분석 파일 보유 회원 목록 · 클릭하면 파일 상세 확인</div>
+
+{% if members %}
+<div class="files-grid">
+    {% for m in members %}
+    <a href="{{ url_for('admin.files_detail', user_id=m['id']) }}" class="file-member-card">
+        <div class="card-top">
+            {% if m['profile_img'] %}
+                <img src="{{ m['profile_img'] }}" class="card-avatar" alt="프로필">
+            {% else %}
+                <div class="card-avatar">{{ m['name'][0] if m['name'] else '?' }}</div>
+            {% endif %}
+            <div>
+                <div class="card-name">{{ m['name'] }}</div>
+                <div class="card-nickname">@{{ m['nickname'] or m['uid'] }}</div>
+            </div>
+        </div>
+        <div class="card-stats">
+            <div>
+                <div class="cs-label">파일 수</div>
+                <div class="cs-value">{{ m['file_count'] }}</div>
+            </div>
+            <div>
+                <div class="cs-label">🐗 멧돼지</div>
+                <div class="cs-value" style="color:var(--danger);">{{ m['total_boar'] or 0 }}</div>
+            </div>
+            <div>
+                <div class="cs-label">🦌 고라니</div>
+                <div class="cs-value" style="color:var(--warning);">{{ m['total_deer'] or 0 }}</div>
+            </div>
+            <div>
+                <div class="cs-label">🦝 너구리</div>
+                <div class="cs-value" style="color:var(--teal);">{{ m['total_racoon'] or 0 }}</div>
+            </div>
+        </div>
+        <div style="margin-top:12px;font-size:.72rem;color:var(--text-muted);font-weight:500;">
+            마지막 분석 {{ m['last_analysis'].strftime('%Y.%m.%d %H:%M') }}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="panel" style="padding:60px;text-align:center;color:var(--text-muted);font-weight:600;">
+    AI 분석 파일이 없습니다.
+</div>
+{% endif %}
+
+{% endblock %}
