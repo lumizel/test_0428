@@ -1,6 +1,5 @@
 from src.service.board_service import BoardService
 from .introduce_service import introduce_bp
-from .auth_service import auth_bp
 from .mypage_service import mypage_bp
 from .admin_service import admin_bp
 from .faq_service import faq_bp
@@ -10,7 +9,6 @@ from .profile_service import profile_bp
 
 __all__ = [
     'BoardService',
-    'auth_bp',
     'mypage_bp',
     'introduce_bp',
     'admin_bp',

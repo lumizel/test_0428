@@ -1,46 +1,82 @@
-# oop 기반의 Member 객체용
+# src/domain/member.py
+from dataclasses import dataclass
+from datetime import date, datetime
+from typing import Optional
 
+
+@dataclass
 class Member:
+    # ── PK / FK ──────────────────────────────
+    id: int
+    uid: str
 
-    def __init__(self, id, uid, pw, name, role="user", birth_day=None, nickname=None, active=True, created_at=None, profile_img=None):
-        self.id = id  # DB의 PK -> AUTO_INCREMENT 자동번호 생성
-        self.uid = uid  # 아이디
-        self.pw = pw  # 비밀번호
-        self.name = name  # 이름
-        self.role = role  # 권한
-        self.birth_day = birth_day # 생년원일
-        self.nickname = nickname # 닉네임
-        self.active = active  # 활성화 여부
-        self.created_at = created_at
-        self.profile_img = profile_img
-        # 사용법
-        # member = Member("kkw","1234","김기원","user")
-        # Member객체를 member변수에 넣음
+    # ── 본문 ─────────────────────────────────
+    password: str
+    name: str
+    nickname: str
+    role: str = 'user'
 
-    @classmethod # self대신 cls라는 객체를 사용 (주소대신 객체)
-    def from_db(cls, row: dict):
-        #            row : dict(타입 명시) 힌트
-        """
-        DictCursor로부터 전달받은 딕셔너리 데이터를 Member 객체로 변환합니다.
-        """
-        if not row:  # cls로 전달된 값이 없으면
-            return None
+    # ── 상태 ─────────────────────────────────
+    active: bool = True
 
-        return cls( # db에 있는 정보를 dict 타입으로 받아와 id에 넣음
-            id=row.get('id'),  # id : 2
-            uid=row.get('uid'), # uid : kkw
-            pw=row.get('password'),  # password : 1111
-            name=row.get('name'),    # name : 김기원
-            role=row.get('role'), # role : admin
-            nickname=row.get('nickname'),
+    # ── 선택 정보 ─────────────────────────────
+    birthdate: Optional[date] = None
+    profile_img: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    # ────────────────────────────────────────
+    # Factory
+    # ────────────────────────────────────────
+    @classmethod
+    def from_db(cls, row: dict) -> "Member":
+        return cls(
+            id=row['id'],
+            uid=row['uid'],
+            password=row['password'],
+            name=row['name'],
+            nickname=row['nickname'],
+            role=row.get('role', 'user'),
+            active=bool(row.get('active', 1)),
+            birthdate=row.get('birthdate'),
             profile_img=row.get('profile_img'),
-            active=bool(row.get('active')), # active : 1 -> True
-            created_at = row.get('created_at'),
-            birth_day = row.get('birthdate'),
+            created_at=row.get('created_at'),
         )
 
-    def is_admin(self):   # role이 admin, manager 인지 확인하는 메서드
-        return self.role in ('admin', 'manager')
+    # ────────────────────────────────────────
+    # 비즈니스 규칙
+    # ────────────────────────────────────────
+    def is_active(self) -> bool:
+        """활성 계정 여부"""
+        return self.active
 
-    def __str__(self): # member객체를 문자열로 출력할 때 사용(테스트용)
-        return f"{self.name}({self.uid}:{self.pw}) [{self.role} ]{self.birth_day}"
+    def check_password(self, raw_password: str) -> bool:
+        """비밀번호 일치 여부"""
+        return self.password == raw_password
+
+    def is_admin(self) -> bool:
+        return self.role == 'admin'
+
+    def to_session(self) -> dict:
+        """로그인 성공 시 session에 저장할 데이터"""
+        return {
+            'user_id':       self.id,
+            'user_name':     self.name,
+            'user_nickname': self.nickname,
+            'user_role':     self.role,
+            'user_profile':  self.profile_img,
+        }
+
+
+# ────────────────────────────────────────
+# Value Object — 나이 검증
+# ────────────────────────────────────────
+MIN_AGE = 14
+
+def calculate_age(birthdate: date) -> int:
+    today = date.today()
+    return (today.year - birthdate.year
+            - ((today.month, today.day) < (birthdate.month, birthdate.day)))
+
+def is_old_enough(birthdate: date) -> bool:
+    """만 14세 이상 여부"""
+    return calculate_age(birthdate) >= MIN_AGE

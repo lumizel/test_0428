@@ -1,115 +1,98 @@
-from flask import (
-    Blueprint,
-    request, session, flash,
-    render_template, redirect, url_for
-)
+# src/service/auth_service.py
 from datetime import date
+from typing import Optional
 
-from src.common import (
-    fetch_query, execute_query,
-    log_system
-)
-
-# auth 서비스에는 로그인, 회원가입, 로그아웃 기능을 넣는다.
-
-auth_bp = Blueprint('auth', __name__)
+from src.domain.member import Member, is_old_enough
+from src.repository.member_repository import MemberRepository
+from src.common import log_system
 
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'GET':
-        return render_template('auth/login.html')
+class AuthService:
 
-    uid = request.form.get('uid')
-    upw = request.form.get('upw')
+    def __init__(self):
+        self.member_repo = MemberRepository()
 
-    # 1. DB에서 유저 정보를 먼저 가져옵니다.
-    user = fetch_query("SELECT * FROM members WHERE uid = %s", (uid,), one=True)
+    # ════════════════════════════════════════
+    # 로그인
+    # ════════════════════════════════════════
 
-    # 2. 유저 존재 여부 체크
-    if user is None:
-        log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'존재하지 않는 UID 시도: {uid}')
-        return """
-            <script>
-                alert("존재하지 않는 아이디입니다.");
-                location.href = "/auth/login";
-            </script>
-            """
+    def login(self, uid: str, password: str) -> Member:
+        """
+        로그인 검증
+        - 존재하지 않는 UID
+        - 비활성 계정
+        - 비밀번호 불일치
+        Returns: 검증 통과한 Member 객체
+        """
+        member = self.member_repo.find_by_uid(uid)
 
-    # DB에서 active 컬럼 값이 0이면 탈퇴한 계정으로 간주합니다.
-    if user['active'] == 0:
-        log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'탈퇴한 계정 접속 시도: {uid}')
-        return """
-            <script>
-                alert("비활성화 처리된 계정입니다.\\n관리자에게 문의해 주세요.");
-                location.href = "/auth/login";
-            </script>
-            """
+        # 1. 존재하지 않는 UID
+        if member is None:
+            log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'존재하지 않는 UID 시도: {uid}')
+            raise ValueError("존재하지 않는 아이디입니다.")
 
-    # 4. 비밀번호 확인 및 로그인 성공 처리
-    if user['password'] == upw:
-        session['user_id'] = user['id']
-        session['user_name'] = user['name']
-        session['user_nickname'] = user['nickname']  # 추가
-        session['user_role'] = user['role']
-        session['user_profile'] = user['profile_img']
+        # 2. 비활성 계정
+        if not member.is_active():
+            log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'탈퇴한 계정 접속 시도: {uid}')
+            raise PermissionError("비활성화 처리된 계정입니다.\n관리자에게 문의해 주세요.")
+
+        # 3. 비밀번호 불일치
+        if not member.check_password(password):
+            log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'비밀번호 불일치 UID: {uid}')
+            raise ValueError("아이디 또는 비밀번호가 일치하지 않습니다.")
+
         log_system('ACCESS', 'INFO', 'LOGIN_SUCCESS', f'로그인 UID : {uid}')
-        return redirect(url_for('index'))
+        return member
 
-    else:
-        log_system('SECURITY', 'WARNING', 'LOGIN_FAIL', f'비밀번호 불일치 UID: {uid}')
-        return "<script>alert('아이디 또는 비밀번호가 일치하지 않습니다.');history.back();</script>"
+    # ════════════════════════════════════════
+    # 회원가입
+    # ════════════════════════════════════════
 
-@auth_bp.route('/logout', methods=['GET', 'POST'])
-def logout():
-    session.clear()
-    flash('로그아웃 되었습니다.')
-    return redirect(url_for('auth.login'))
+    def signup(
+        self,
+        uid: str,
+        password: str,
+        name: str,
+        nickname: str,
+        birth_year: str,
+        birth_month: str,
+        birth_day: str,
+    ):
+        """
+        회원가입
+        - 생년월일 누락 확인
+        - 만 14세 미만 차단
+        - UID 중복 확인
+        - DB INSERT
+        """
+        # 1. 생년월일 누락 확인
+        if not all([birth_year, birth_month, birth_day]):
+            raise ValueError("생년월일을 모두 입력해주세요.")
 
-@auth_bp.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if request.method == 'GET':
-        today_year = date.today().year
-        return render_template('auth/signup.html', year_now=today_year)
+        # 2. 만 14세 미만 차단
+        try:
+            birthdate = date(int(birth_year), int(birth_month), int(birth_day))
+        except (ValueError, TypeError):
+            raise ValueError("올바른 생년월일을 입력해주세요.")
 
-    uid = request.form.get('uid')
-    password = request.form.get('password')
-    name = request.form.get('name')
-    nickname = request.form.get('nickname')  # 추가
-    # 회원가입 시 생년월일 추가(만 14세 이상만 가입 가능)
-    # [추가] 따로 입력받은 년, 월, 일을 가져옴
-    b_year = request.form.get('birth_year')
-    b_month = request.form.get('birth_month')
-    b_day = request.form.get('birth_day')
+        if not is_old_enough(birthdate):
+            raise PermissionError("만 14세 이상만 가입 가능합니다.")
 
-    try:
-        # [추가] 만 나이 계산 및 14세 체크
-        if b_year and b_month and b_day:
-            birth_date = date(int(b_year), int(b_month), int(b_day))
-            today = date.today()
-            age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        # 3. UID 중복 확인
+        if self.member_repo.exists_by_uid(uid):
+            raise ValueError("이미 존재하는 아이디입니다.")
 
-            if age < 14:
-                return '<script>alert("만 14세 이상만 가입 가능합니다.");history.back();</script>'
+        # 4. DB INSERT
+        birthdate_str = birthdate.strftime('%Y-%m-%d')
+        self.member_repo.create(uid, password, name, nickname, birthdate_str)
 
-            # DB에 저장할 날짜 형식 (YYYY-MM-DD)
-            birthdate_str = birth_date.strftime('%Y-%m-%d')
-        else:
-            return '<script>alert("생년월일을 모두 입력해주세요.");history.back();</script>'
+    # ════════════════════════════════════════
+    # 로그아웃
+    # ════════════════════════════════════════
 
-        # 1. 중복 체크 (SELECT)
-        exist = fetch_query("SELECT id FROM members WHERE uid = %s", (uid,), one=True)
-
-        if exist:
-            return '<script>alert("이미 존재하는 아이디입니다.");history.back();</script>'
-
-        # 2. 회원 가입 (INSERT - DML)
-        # [개선] 복잡한 conn, cursor, commit 코드가 사라지고 함수 호출만 남음
-        hashed_pw = password
-        execute_query("INSERT INTO members (uid, password, name, nickname, birthdate) VALUES (%s, %s, %s, %s, %s)", (uid, hashed_pw, name, nickname, birthdate_str))
-
-        return '<script>alert("가입 완료!"); location.href="/auth/login";</script>'
-
-    except Exception as e:
-        print(f"가입 에러: {e}")
-        return '가입 중 오류 발생'
+    def logout(self):
+        """
+        현재는 session.clear()만으로 충분하지만
+        추후 토큰 무효화, 로그 기록 등 확장 가능하도록 Service에 위치
+        """
+        pass

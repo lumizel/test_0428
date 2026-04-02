@@ -1,4 +1,4 @@
-from src.domain.Member import Member
+from src.domain.member import Member
 from src.domain.board import Board
 from src.domain.comment import Comment
 from src.domain.file import File, AllowedExtension, MAX_FILE_SIZE
