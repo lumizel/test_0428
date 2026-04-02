@@ -4,6 +4,7 @@ from src.controller.faq_controller import faq_bp
 from src.controller.introduce_controller import introduce_bp
 from src.controller.mypage_controller import mypage_bp
 from src.controller.profile_controller import profile_bp
+from src.controller.tip_controller import tip_bp
 
 __all__ = [
     'auth_bp',
@@ -12,4 +13,5 @@ __all__ = [
     'introduce_bp',
     'mypage_bp',
     'profile_bp',
+    'tip_bp',
 ]
