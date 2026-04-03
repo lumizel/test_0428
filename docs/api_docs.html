@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>도(道)서관 API 명세서</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333; }
+
+    /* ── 헤더 ── */
+    .header {
+      background: linear-gradient(135deg, #20828A, #165e63);
+      color: white;
+      padding: 32px 40px;
+    }
+    .header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 6px; }
+    .header p  { opacity: 0.85; font-size: 1rem; }
+    .header .meta { margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .badge {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* ── 레이아웃 ── */
+    .container { display: flex; min-height: calc(100vh - 140px); }
+
+    /* ── 사이드바 ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: #fff;
+      border-right: 1px solid #e5e7eb;
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar-title {
+      padding: 0 20px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .sidebar-item {
+      padding: 8px 20px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: #374151;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .sidebar-item:hover { background: #f0fafa; color: #20828A; }
+    .sidebar-item.active { background: #f0fafa; color: #20828A; border-left-color: #20828A; font-weight: 600; }
+
+    /* ── 메인 ── */
+    .main { flex: 1; padding: 32px 40px; max-width: 1000px; }
+
+    /* ── 검색 ── */
+    .search-box {
+      margin-bottom: 28px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .search-box input:focus { border-color: #20828A; box-shadow: 0 0 0 3px rgba(32,130,138,0.1); }
+
+    /* ── 태그 섹션 ── */
+    .tag-section { margin-bottom: 36px; }
+    .tag-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tag-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #111827;
+    }
+    .tag-count {
+      background: #e5e7eb;
+      color: #6b7280;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .tag-toggle {
+      margin-left: auto;
+      color: #9ca3af;
+      font-size: 0.85rem;
+      transition: transform 0.2s;
+    }
+    .tag-toggle.collapsed { transform: rotate(-90deg); }
+
+    /* ── API 카드 ── */
+    .api-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      background: #fff;
+      transition: box-shadow 0.2s;
+    }
+    .api-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+    .api-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+    }
+    .method {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      min-width: 58px;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+    .method.GET    { background: #dbeafe; color: #1d4ed8; }
+    .method.POST   { background: #d1fae5; color: #065f46; }
+    .method.PUT    { background: #fef3c7; color: #92400e; }
+    .method.DELETE { background: #fee2e2; color: #991b1b; }
+    .method.PATCH  { background: #ede9fe; color: #5b21b6; }
+
+    .api-path {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: #374151;
+      font-weight: 600;
+    }
+    .api-summary {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-left: auto;
+      text-align: right;
+      max-width: 300px;
+    }
+    .auth-badge {
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* ── API 상세 ── */
+    .api-detail {
+      display: none;
+      border-top: 1px solid #f3f4f6;
+      padding: 18px 18px 20px;
+      background: #fafafa;
+    }
+    .api-detail.open { display: block; }
+
+    .detail-section { margin-bottom: 16px; }
+    .detail-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .param-table th {
+      background: #f3f4f6;
+      padding: 7px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.78rem;
+    }
+    .param-table td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: top;
+    }
+    .param-table tr:last-child td { border-bottom: none; }
+    .required-badge {
+      background: #fee2e2;
+      color: #dc2626;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+    .type-badge {
+      background: #f3f4f6;
+      color: #374151;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .response-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 6px 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 0.85rem;
+    }
+    .response-item:last-child { border-bottom: none; }
+    .status-code {
+      font-weight: 700;
+      min-width: 40px;
+      font-family: 'Courier New', monospace;
+    }
+    .status-200 { color: #065f46; }
+    .status-302 { color: #1d4ed8; }
+    .status-400 { color: #92400e; }
+    .status-401 { color: #dc2626; }
+    .status-403 { color: #dc2626; }
+    .status-404 { color: #dc2626; }
+    .status-500 { color: #dc2626; }
+
+    .example-box {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .json-key   { color: #7dd3fc; }
+    .json-str   { color: #86efac; }
+    .json-num   { color: #fcd34d; }
+    .json-bool  { color: #f9a8d4; }
+
+    /* ── 통계 ── */
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px 24px;
+      text-align: center;
+      flex: 1;
+      min-width: 120px;
+    }
+    .stat-num { font-size: 1.8rem; font-weight: 800; color: #20828A; }
+    .stat-label { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛣 도(道)서관 API 명세서</h1>
+  <p>AI 기술을 활용한 안전 주행 통합 플랫폼 REST API</p>
+  <div class="meta">
+    <span class="badge">Version 1.0.0</span>
+    <span class="badge">Flask + Python</span>
+    <span class="badge">Session 기반 인증</span>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 사이드바 -->
+  <nav class="sidebar">
+    <div class="sidebar-title">태그</div>
+    <div class="sidebar-item active" onclick="scrollToTag('all')">전체 보기</div>
+    <div class="sidebar-item" onclick="scrollToTag('Auth')">🔐 Auth</div>
+    <div class="sidebar-item" onclick="scrollToTag('Board')">📋 Board</div>
+    <div class="sidebar-item" onclick="scrollToTag('Mypage')">👤 Mypage</div>
+    <div class="sidebar-item" onclick="scrollToTag('Profile')">🙍 Profile</div>
+    <div class="sidebar-item" onclick="scrollToTag('AIModel')">🤖 AI Model</div>
+    <div class="sidebar-item" onclick="scrollToTag('FAQ')">❓ FAQ</div>
+    <div class="sidebar-item" onclick="scrollToTag('Introduce')">📄 Introduce</div>
+    <div class="sidebar-item" onclick="scrollToTag('Tip')">💡 Tip</div>
+    <div class="sidebar-item" onclick="scrollToTag('Admin')">⚙️ Admin</div>
+  </nav>
+
+  <!-- 메인 -->
+  <main class="main">
+
+    <!-- 검색 -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍  API 경로 또는 설명 검색..." oninput="filterApis(this.value)">
+    </div>
+
+    <!-- 통계 -->
+    <div class="stats">
+      <div class="stat-card"><div class="stat-num">75</div><div class="stat-label">전체 엔드포인트</div></div>
+      <div class="stat-card"><div class="stat-num">9</div><div class="stat-label">태그 그룹</div></div>
+      <div class="stat-card"><div class="stat-num">48</div><div class="stat-label">인증 필요 API</div></div>
+      <div class="stat-card"><div class="stat-num">27</div><div class="stat-label">공개 API</div></div>
+    </div>
+
+    <!-- API 목록 -->
+    <div id="apiList"></div>
+
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// API 데이터
+// ════════════════════════════════════════
+const API_DATA = [
+  // ── Auth ──
+  { tag:'Auth', method:'GET',  path:'/auth/login',   summary:'로그인 페이지', auth:false,
+    responses:[{code:'200',desc:'로그인 페이지 반환'}] },
+  { tag:'Auth', method:'POST', path:'/auth/login',   summary:'로그인', auth:false,
+    params:[
+      {name:'uid', in:'body', type:'string', required:true, desc:'아이디'},
+      {name:'upw', in:'body', type:'string', required:true, desc:'비밀번호'},
+    ],
+    responses:[{code:'302',desc:'로그인 성공 → 메인 리다이렉트'},{code:'200',desc:'로그인 실패 → 알림'}] },
+  { tag:'Auth', method:'GET',  path:'/auth/logout',  summary:'로그아웃', auth:true,
+    responses:[{code:'302',desc:'로그아웃 → 로그인 페이지 리다이렉트'}] },
+  { tag:'Auth', method:'GET',  path:'/auth/signup',  summary:'회원가입 페이지', auth:false,
+    responses:[{code:'200',desc:'회원가입 페이지 반환'}] },
+  { tag:'Auth', method:'POST', path:'/auth/signup',  summary:'회원가입', auth:false,
+    params:[
+      {name:'uid',         in:'body', type:'string', required:true,  desc:'아이디'},
+      {name:'password',    in:'body', type:'string', required:true,  desc:'비밀번호'},
+      {name:'name',        in:'body', type:'string', required:true,  desc:'이름'},
+      {name:'nickname',    in:'body', type:'string', required:true,  desc:'닉네임'},
+      {name:'birth_year',  in:'body', type:'string', required:true,  desc:'생년'},
+      {name:'birth_month', in:'body', type:'string', required:true,  desc:'생월'},
+      {name:'birth_day',   in:'body', type:'string', required:true,  desc:'생일'},
+    ],
+    responses:[{code:'200',desc:'가입 완료 → 로그인 리다이렉트'},{code:'200',desc:'실패 (중복 UID / 만 14세 미만)'}] },
+
+  // ── Board ──
+  { tag:'Board', method:'GET',  path:'/board/list', summary:'게시글 목록', auth:false,
+    params:[
+      {name:'category',    in:'query', type:'string',  required:false, desc:'free | info | qna'},
+      {name:'page',        in:'query', type:'integer', required:false, desc:'페이지 번호 (기본 1)'},
+      {name:'per_page',    in:'query', type:'integer', required:false, desc:'페이지당 개수 (기본 10)'},
+      {name:'search',      in:'query', type:'string',  required:false, desc:'검색어'},
+      {name:'search_type', in:'query', type:'string',  required:false, desc:'title | content | all'},
+      {name:'sort',        in:'query', type:'string',  required:false, desc:'latest | popular'},
+      {name:'show_pinned', in:'query', type:'string',  required:false, desc:'on | off'},
+    ],
+    responses:[{code:'200',desc:'게시글 목록 페이지 반환'}] },
+  { tag:'Board', method:'GET',  path:'/board/write', summary:'게시글 작성 페이지', auth:true,
+    params:[{name:'category', in:'query', type:'string', required:false, desc:'free | info | qna'}],
+    responses:[{code:'200',desc:'작성 페이지 반환'}] },
+  { tag:'Board', method:'POST', path:'/board/write', summary:'게시글 작성', auth:true,
+    params:[
+      {name:'category', in:'body', type:'string', required:true,  desc:'free | info | qna'},
+      {name:'title',    in:'body', type:'string', required:true,  desc:'제목'},
+      {name:'content',  in:'body', type:'string', required:true,  desc:'내용 (HTML)'},
+      {name:'file',     in:'body', type:'file',   required:false, desc:'첨부파일'},
+    ],
+    responses:[{code:'302',desc:'작성 완료 → 목록 리다이렉트'}] },
+  { tag:'Board', method:'GET',  path:'/board/view/{board_id}', summary:'게시글 상세보기', auth:false,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    responses:[{code:'200',desc:'게시글 상세 페이지'},{code:'200',desc:'신고 5개 이상 차단'}] },
+  { tag:'Board', method:'GET',  path:'/board/edit/{board_id}', summary:'게시글 수정 페이지', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    responses:[{code:'200',desc:'수정 페이지 반환'}] },
+  { tag:'Board', method:'POST', path:'/board/edit/{board_id}', summary:'게시글 수정', auth:true,
+    params:[
+      {name:'board_id', in:'path', type:'integer', required:true,  desc:'게시글 ID'},
+      {name:'title',    in:'body', type:'string',  required:false, desc:'제목'},
+      {name:'content',  in:'body', type:'string',  required:false, desc:'내용'},
+    ],
+    responses:[{code:'302',desc:'수정 완료 → 상세 페이지'}] },
+  { tag:'Board', method:'GET',  path:'/board/delete/{board_id}', summary:'게시글 삭제 (일반: 휴지통 / 관리자: 영구삭제)', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    responses:[{code:'200',desc:'삭제 완료'}] },
+  { tag:'Board', method:'POST', path:'/board/like/{board_id}', summary:'좋아요 토글', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    example:'{"success":true,"is_liked":true,"like_count":5,"dislike_count":1}',
+    responses:[{code:'200',desc:'토글 성공'},{code:'401',desc:'로그인 필요'}] },
+  { tag:'Board', method:'POST', path:'/board/dislike/{board_id}', summary:'싫어요 토글', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    example:'{"success":true,"is_disliked":true,"like_count":4,"dislike_count":2}',
+    responses:[{code:'200',desc:'토글 성공'},{code:'401',desc:'로그인 필요'}] },
+  { tag:'Board', method:'POST', path:'/board/comment/{board_id}', summary:'댓글 / 대댓글 작성', auth:true,
+    params:[
+      {name:'board_id',  in:'path', type:'integer', required:true,  desc:'게시글 ID'},
+      {name:'content',   in:'body', type:'string',  required:true,  desc:'댓글 내용'},
+      {name:'parent_id', in:'body', type:'integer', required:false, desc:'대댓글일 경우 부모 댓글 ID'},
+    ],
+    example:'{"success":true}',
+    responses:[{code:'200',desc:'작성 성공'},{code:'401',desc:'로그인 필요'}] },
+  { tag:'Board', method:'POST', path:'/board/comment/edit/{comment_id}', summary:'댓글 수정', auth:true,
+    params:[
+      {name:'comment_id', in:'path', type:'integer', required:true, desc:'댓글 ID'},
+      {name:'content',    in:'body', type:'string',  required:true, desc:'수정 내용'},
+    ],
+    responses:[{code:'200',desc:'수정 성공'},{code:'403',desc:'권한 없음'}] },
+  { tag:'Board', method:'POST', path:'/board/comment/delete/{comment_id}', summary:'댓글 soft delete', auth:true,
+    params:[{name:'comment_id', in:'path', type:'integer', required:true, desc:'댓글 ID'}],
+    responses:[{code:'200',desc:'삭제 성공'},{code:'403',desc:'권한 없음'}] },
+  { tag:'Board', method:'POST', path:'/board/report/{board_id}', summary:'게시글 신고', auth:true,
+    params:[
+      {name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'},
+      {name:'reason',   in:'body', type:'string',  required:true, desc:'spam | obscene | abuse | illegal | personal | other'},
+    ],
+    responses:[{code:'200',desc:'신고 접수'},{code:'400',desc:'중복 신고 / 유효하지 않은 사유'},{code:'403',desc:'본인 글 신고 불가'}] },
+  { tag:'Board', method:'POST', path:'/board/view/scrap/{board_id}', summary:'스크랩 토글', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    example:'{"success":true,"is_scrapped":true,"message":"게시글을 스크랩하였습니다."}',
+    responses:[{code:'200',desc:'토글 성공'},{code:'401',desc:'로그인 필요'}] },
+  { tag:'Board', method:'POST', path:'/board/upload/image', summary:'에디터 이미지 업로드 (Summernote)', auth:true,
+    params:[{name:'file', in:'body', type:'file', required:true, desc:'이미지 파일'}],
+    example:'{"url":"https://res.cloudinary.com/..."}',
+    responses:[{code:'200',desc:'업로드 성공'},{code:'400',desc:'파일 없음'}] },
+  { tag:'Board', method:'GET',  path:'/board/download/{file_id}', summary:'첨부파일 다운로드', auth:false,
+    params:[{name:'file_id', in:'path', type:'integer', required:true, desc:'파일 ID'}],
+    responses:[{code:'200',desc:'파일 다운로드'},{code:'404',desc:'파일 없음'}] },
+  { tag:'Board', method:'GET',  path:'/board/trash', summary:'휴지통 목록', auth:true,
+    responses:[{code:'200',desc:'휴지통 목록 페이지'}] },
+  { tag:'Board', method:'GET',  path:'/board/restore/{board_id}', summary:'휴지통에서 게시글 복구', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    responses:[{code:'302',desc:'복구 → 마이페이지'}] },
+  { tag:'Board', method:'GET',  path:'/board/permanent_delete/{board_id}', summary:'게시글 영구 삭제', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    responses:[{code:'302',desc:'영구 삭제 → 마이페이지'}] },
+  { tag:'Board', method:'POST', path:'/board/follow/{following_id}', summary:'팔로우 토글', auth:true,
+    params:[{name:'following_id', in:'path', type:'integer', required:true, desc:'팔로우 대상 ID'}],
+    example:'{"success":true,"is_following":true}',
+    responses:[{code:'200',desc:'토글 성공'},{code:'401',desc:'로그인 필요'}] },
+  { tag:'Board', method:'GET',  path:'/board/profile/{member_id}', summary:'작성자 프로필 조회', auth:false,
+    params:[{name:'member_id', in:'path', type:'integer', required:true, desc:'회원 ID'}],
+    responses:[{code:'200',desc:'프로필 페이지'}] },
+
+  // ── Mypage ──
+  { tag:'Mypage', method:'GET',  path:'/mypage/', summary:'마이페이지 메인 (회원 정보)', auth:true,
+    responses:[{code:'200',desc:'마이페이지 반환'}] },
+  { tag:'Mypage', method:'GET',  path:'/mypage/edit', summary:'회원 정보 수정 페이지', auth:true,
+    responses:[{code:'200',desc:'수정 페이지 반환'}] },
+  { tag:'Mypage', method:'POST', path:'/mypage/edit', summary:'회원 정보 수정', auth:true,
+    params:[
+      {name:'name',        in:'body', type:'string', required:false, desc:'이름'},
+      {name:'nickname',    in:'body', type:'string', required:false, desc:'닉네임'},
+      {name:'password',    in:'body', type:'string', required:false, desc:'비밀번호'},
+      {name:'birth_year',  in:'body', type:'string', required:false, desc:'생년'},
+      {name:'birth_month', in:'body', type:'string', required:false, desc:'생월'},
+      {name:'birth_day',   in:'body', type:'string', required:false, desc:'생일'},
+    ],
+    responses:[{code:'200',desc:'수정 완료 → 마이페이지'}] },
+  { tag:'Mypage', method:'POST', path:'/mypage/profile/upload', summary:'프로필 이미지 업로드', auth:true,
+    params:[{name:'profile_img', in:'body', type:'file', required:true, desc:'이미지 파일'}],
+    responses:[{code:'200',desc:'업로드 완료 → 마이페이지'}] },
+  { tag:'Mypage', method:'POST', path:'/mypage/profile/delete', summary:'프로필 이미지 삭제', auth:true,
+    responses:[{code:'200',desc:'삭제 완료 → 마이페이지'}] },
+  { tag:'Mypage', method:'GET',  path:'/mypage/my_activity/', summary:'나의 활동 (게시글, 댓글, 좋아요, 스크랩, 휴지통, 차단)', auth:true,
+    params:[{name:'page', in:'query', type:'integer', required:false, desc:'페이지 번호'}],
+    responses:[{code:'200',desc:'나의 활동 페이지'}] },
+  { tag:'Mypage', method:'GET',  path:'/mypage/my_activity/unblock/{blocked_id}', summary:'차단 해제', auth:true,
+    params:[{name:'blocked_id', in:'path', type:'integer', required:true, desc:'차단 해제할 회원 ID'}],
+    responses:[{code:'302',desc:'차단 해제 → 나의 활동'}] },
+  { tag:'Mypage', method:'POST', path:'/mypage/delete_account', summary:'회원 탈퇴 (soft delete)', auth:true,
+    responses:[{code:'200',desc:'탈퇴 완료 → 메인'}] },
+  { tag:'Mypage', method:'GET',  path:'/mypage/ai_results', summary:'AI 분석 결과 목록', auth:true,
+    params:[{name:'page', in:'query', type:'integer', required:false, desc:'페이지 번호'}],
+    responses:[{code:'200',desc:'AI 분석 결과 목록 페이지'}] },
+  { tag:'Mypage', method:'GET',  path:'/mypage/download_report/{analysis_id}', summary:'AI 분석 보고서 텍스트 다운로드', auth:true,
+    params:[{name:'analysis_id', in:'path', type:'integer', required:true, desc:'분석 결과 ID'}],
+    responses:[{code:'200',desc:'텍스트 보고서 다운로드'},{code:'403',desc:'권한 없음'},{code:'404',desc:'결과 없음'}] },
+  { tag:'Mypage', method:'POST', path:'/mypage/delete_ai_result/{analysis_id}', summary:'AI 분석 결과 삭제', auth:true,
+    params:[{name:'analysis_id', in:'path', type:'integer', required:true, desc:'분석 결과 ID'}],
+    example:'{"success":true}',
+    responses:[{code:'200',desc:'삭제 성공'},{code:'403',desc:'권한 없음'}] },
+
+  // ── Profile ──
+  { tag:'Profile', method:'GET',  path:'/profile/{member_id}', summary:'유저 프로필 페이지', auth:false,
+    params:[
+      {name:'member_id', in:'path',  type:'integer', required:true,  desc:'회원 ID'},
+      {name:'p_page',    in:'query', type:'integer', required:false, desc:'게시글 페이지'},
+      {name:'c_page',    in:'query', type:'integer', required:false, desc:'댓글 페이지'},
+    ],
+    responses:[{code:'200',desc:'프로필 페이지'}] },
+  { tag:'Profile', method:'POST', path:'/profile/follow/{following_id}', summary:'팔로우 토글 (자기 자신 불가)', auth:true,
+    params:[{name:'following_id', in:'path', type:'integer', required:true, desc:'팔로우 대상 ID'}],
+    example:'{"success":true,"is_following":true}',
+    responses:[{code:'200',desc:'토글 성공'},{code:'400',desc:'자기 자신 팔로우 불가'},{code:'401',desc:'로그인 필요'}] },
+  { tag:'Profile', method:'POST', path:'/profile/block/{blocked_id}', summary:'차단 토글 (차단 시 양방향 팔로우 자동 해제)', auth:true,
+    params:[{name:'blocked_id', in:'path', type:'integer', required:true, desc:'차단 대상 ID'}],
+    example:'{"success":true,"is_blocked":true}',
+    responses:[{code:'200',desc:'토글 성공'},{code:'400',desc:'자기 자신 차단 불가'},{code:'401',desc:'로그인 필요'}] },
+
+  // ── AI Model ──
+  { tag:'AIModel', method:'GET',  path:'/model/', summary:'도(道)와주세요 페이지', auth:true,
+    responses:[{code:'200',desc:'AI 모델 페이지 반환'}] },
+  { tag:'AIModel', method:'POST', path:'/model/detect', summary:'이미지 단일 프레임 탐지 (바운딩박스용)', auth:true,
+    params:[{name:'file', in:'body', type:'file', required:true, desc:'이미지 파일 (JPEG/PNG)'}],
+    example:'{\n  "success": true,\n  "counts": [1, 2, 0],\n  "detections": [\n    {"label":"너구리","conf":"0.89","bbox":[0.1,0.2,0.5,0.8]}\n  ]\n}',
+    responses:[{code:'200',desc:'탐지 성공'},{code:'400',desc:'파일 없음'},{code:'500',desc:'탐지 실패'}] },
+  { tag:'AIModel', method:'POST', path:'/model/detect_and_save', summary:'이미지 탐지 + 자동 클라우드 저장', auth:true,
+    params:[
+      {name:'file',              in:'body', type:'file',    required:true,  desc:'이미지 파일'},
+      {name:'original_filename', in:'body', type:'string',  required:true,  desc:'원본 파일명'},
+      {name:'boar_count',        in:'body', type:'integer', required:false, desc:'멧돼지 탐지 수'},
+      {name:'water_deer_count',  in:'body', type:'integer', required:false, desc:'고라니 탐지 수'},
+      {name:'racoon_count',      in:'body', type:'integer', required:false, desc:'너구리 탐지 수'},
+    ],
+    example:'{\n  "success": true,\n  "url": "https://res.cloudinary.com/...",\n  "counts": [1, 2, 0],\n  "detections": [...]\n}',
+    responses:[{code:'200',desc:'탐지 + 저장 성공'},{code:'401',desc:'로그인 필요'},{code:'500',desc:'서버 오류'}] },
+  { tag:'AIModel', method:'POST', path:'/model/analyze_and_save_video', summary:'영상 YOLO 분석 + 압축 + 자동 저장 (10MB 초과 시 자동 압축)', auth:true,
+    params:[
+      {name:'file',              in:'body', type:'file',   required:true,  desc:'영상 파일 (mp4, avi, mov, mkv)'},
+      {name:'original_filename', in:'body', type:'string', required:true,  desc:'원본 파일명'},
+    ],
+    example:'{\n  "success": true,\n  "url": "https://res.cloudinary.com/...",\n  "message": "저장 완료",\n  "counts": [1, 2, 0]\n}',
+    responses:[{code:'200',desc:'분석 + 저장 성공'},{code:'401',desc:'로그인 필요'},{code:'500',desc:'분석 실패'}] },
+  { tag:'AIModel', method:'GET',  path:'/model/video_feed/{filename}', summary:'실시간 영상 스트리밍 (MJPEG)', auth:true,
+    params:[{name:'filename', in:'path', type:'string', required:true, desc:'temp 폴더의 파일명'}],
+    responses:[{code:'200',desc:'MJPEG 스트림 반환'},{code:'404',desc:'파일 없음'}] },
+
+  // ── FAQ ──
+  { tag:'FAQ', method:'GET',  path:'/faq/', summary:'FAQ 목록 페이지', auth:false,
+    params:[{name:'category', in:'query', type:'string', required:false, desc:'general | feature | account'}],
+    responses:[{code:'200',desc:'FAQ 페이지 반환'}] },
+  { tag:'FAQ', method:'POST', path:'/faq/create', summary:'FAQ 생성 (관리자)', auth:true,
+    params:[
+      {name:'question', in:'body', type:'string',  required:true,  desc:'질문'},
+      {name:'answer',   in:'body', type:'string',  required:true,  desc:'답변'},
+      {name:'category', in:'body', type:'string',  required:false, desc:'general | feature | account'},
+      {name:'order',    in:'body', type:'integer', required:false, desc:'노출 순서'},
+    ],
+    responses:[{code:'200',desc:'생성 성공'},{code:'403',desc:'관리자 권한 필요'}] },
+  { tag:'FAQ', method:'POST', path:'/faq/edit/{faq_id}', summary:'FAQ 수정 (관리자)', auth:true,
+    params:[{name:'faq_id', in:'path', type:'integer', required:true, desc:'FAQ ID'}],
+    responses:[{code:'200',desc:'수정 성공'},{code:'403',desc:'관리자 권한 필요'}] },
+  { tag:'FAQ', method:'POST', path:'/faq/delete/{faq_id}', summary:'FAQ 삭제 (관리자, soft delete)', auth:true,
+    params:[{name:'faq_id', in:'path', type:'integer', required:true, desc:'FAQ ID'}],
+    responses:[{code:'200',desc:'삭제 성공'},{code:'403',desc:'관리자 권한 필요'}] },
+
+  // ── Introduce ──
+  { tag:'Introduce', method:'GET', path:'/introduce/background', summary:'프로젝트 배경 페이지', auth:false, responses:[{code:'200',desc:'페이지 반환'}] },
+  { tag:'Introduce', method:'GET', path:'/introduce/features',   summary:'홈페이지 소개 페이지', auth:false, responses:[{code:'200',desc:'페이지 반환'}] },
+  { tag:'Introduce', method:'GET', path:'/introduce/logo',       summary:'BI 소개 페이지',       auth:false, responses:[{code:'200',desc:'페이지 반환'}] },
+  { tag:'Introduce', method:'GET', path:'/introduce/process',    summary:'개발 과정 페이지',     auth:false, responses:[{code:'200',desc:'페이지 반환'}] },
+
+  // ── Tip ──
+  { tag:'Tip', method:'GET', path:'/tip/', summary:'운전 팁 페이지', auth:false, responses:[{code:'200',desc:'페이지 반환'}] },
+
+  // ── Admin ──
+  { tag:'Admin', method:'GET',  path:'/admin/', summary:'관리자 대시보드', auth:true,
+    responses:[{code:'200',desc:'대시보드 반환'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/members', summary:'회원 목록', auth:true,
+    params:[
+      {name:'q',      in:'query', type:'string',  required:false, desc:'검색어 (이름/아이디)'},
+      {name:'role',   in:'query', type:'string',  required:false, desc:'user | manager | admin'},
+      {name:'active', in:'query', type:'string',  required:false, desc:'0 (비활성) | 1 (활성)'},
+      {name:'page',   in:'query', type:'integer', required:false, desc:'페이지 번호'},
+    ],
+    responses:[{code:'200',desc:'회원 목록 페이지'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/members/{member_id}/detail', summary:'회원 상세 페이지', auth:true,
+    params:[
+      {name:'member_id', in:'path',  type:'integer', required:true,  desc:'회원 ID'},
+      {name:'tab',       in:'query', type:'string',  required:false, desc:'boards | comments | trash | follows | followers | blocks'},
+      {name:'page',      in:'query', type:'integer', required:false, desc:'페이지 번호'},
+    ],
+    responses:[{code:'200',desc:'회원 상세 페이지'}] },
+  { tag:'Admin', method:'POST', path:'/admin/member/add', summary:'회원 추가', auth:true,
+    params:[
+      {name:'uid',       in:'body', type:'string', required:true,  desc:'아이디'},
+      {name:'name',      in:'body', type:'string', required:true,  desc:'이름'},
+      {name:'nickname',  in:'body', type:'string', required:true,  desc:'닉네임'},
+      {name:'password',  in:'body', type:'string', required:true,  desc:'비밀번호'},
+      {name:'birthdate', in:'body', type:'string', required:false, desc:'생년월일 (YYYY-MM-DD)'},
+    ],
+    responses:[{code:'200',desc:'추가 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/member/update/{member_id}', summary:'회원 정보 수정 (admin 등급 임명 불가)', auth:true,
+    params:[{name:'member_id', in:'path', type:'integer', required:true, desc:'회원 ID'}],
+    responses:[{code:'200',desc:'수정 성공'},{code:'403',desc:'권한 없음'}] },
+  { tag:'Admin', method:'POST', path:'/admin/member/delete/{member_id}', summary:'회원 활성화 토글 (active 0↔1)', auth:true,
+    params:[{name:'member_id', in:'path', type:'integer', required:true, desc:'회원 ID'}],
+    responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/posts', summary:'게시글 목록', auth:true,
+    params:[
+      {name:'q',        in:'query', type:'string',  required:false, desc:'검색어'},
+      {name:'category', in:'query', type:'string',  required:false, desc:'free | info | qna'},
+      {name:'type',     in:'query', type:'string',  required:false, desc:'notice | normal'},
+      {name:'status',   in:'query', type:'string',  required:false, desc:'normal | reported | hidden'},
+      {name:'page',     in:'query', type:'integer', required:false, desc:'페이지 번호'},
+    ],
+    responses:[{code:'200',desc:'게시글 목록 페이지'}] },
+  { tag:'Admin', method:'POST', path:'/admin/board/hide/{board_id}',     summary:'게시글 숨김',     auth:true, params:[{name:'board_id',in:'path',type:'integer',required:true,desc:'게시글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/board/restore/{board_id}',  summary:'게시글 복구',     auth:true, params:[{name:'board_id',in:'path',type:'integer',required:true,desc:'게시글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/board/unreport/{board_id}', summary:'게시글 신고 초기화', auth:true, params:[{name:'board_id',in:'path',type:'integer',required:true,desc:'게시글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/board/pin/{board_id}',      summary:'게시글 공지 설정', auth:true, params:[{name:'board_id',in:'path',type:'integer',required:true,desc:'게시글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/board/unpin/{board_id}',    summary:'게시글 공지 해제', auth:true, params:[{name:'board_id',in:'path',type:'integer',required:true,desc:'게시글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/board/update/{board_id}',   summary:'게시글 수정', auth:true,
+    params:[
+      {name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'},
+      {name:'title',    in:'body', type:'string',  required:false, desc:'제목'},
+      {name:'content',  in:'body', type:'string',  required:false, desc:'내용'},
+    ],
+    responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/board/detail/{board_id}', summary:'게시글 상세 JSON 조회', auth:true,
+    params:[{name:'board_id', in:'path', type:'integer', required:true, desc:'게시글 ID'}],
+    example:'{"id":1,"title":"제목","content":"내용","author":"홍길동","reports":["spam"]}',
+    responses:[{code:'200',desc:'상세 JSON'},{code:'404',desc:'게시글 없음'}] },
+  { tag:'Admin', method:'POST', path:'/admin/members/{member_id}/board/{board_id}/delete',   summary:'회원 게시글 활성화 토글', auth:true, params:[{name:'member_id',in:'path',type:'integer',required:true,desc:'회원 ID'},{name:'board_id',in:'path',type:'integer',required:true,desc:'게시글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/members/{member_id}/comment/{comment_id}/delete', summary:'회원 댓글 활성화 토글', auth:true, params:[{name:'member_id',in:'path',type:'integer',required:true,desc:'회원 ID'},{name:'comment_id',in:'path',type:'integer',required:true,desc:'댓글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'POST', path:'/admin/members/{member_id}/trash/{board_id}/delete',   summary:'회원 휴지통 게시글 영구 삭제', auth:true, params:[{name:'member_id',in:'path',type:'integer',required:true,desc:'회원 ID'},{name:'board_id',in:'path',type:'integer',required:true,desc:'게시글 ID'}], responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/files', summary:'AI 자료실 — 회원 목록', auth:true, responses:[{code:'200',desc:'AI 자료실 페이지'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/files/{user_id}', summary:'AI 자료실 — 회원별 파일 목록', auth:true,
+    params:[
+      {name:'user_id', in:'path',  type:'integer', required:true,  desc:'회원 ID'},
+      {name:'page',    in:'query', type:'integer', required:false, desc:'페이지 번호'},
+    ],
+    responses:[{code:'200',desc:'파일 목록 페이지'}] },
+  { tag:'Admin', method:'POST', path:'/admin/files/{file_id}/toggle', summary:'AI 파일 활성화 토글', auth:true,
+    params:[{name:'file_id', in:'path', type:'integer', required:true, desc:'파일 ID'}],
+    responses:[{code:'200',desc:'처리 성공'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/api/visitors', summary:'방문자 통계 API', auth:true,
+    example:'{\n  "today":{"total":120,"logged_in":80,"anonymous":40},\n  "week":[...],\n  "month":[...]\n}',
+    responses:[{code:'200',desc:'방문자 통계 JSON'}] },
+  { tag:'Admin', method:'GET',  path:'/admin/api/ai_stats', summary:'AI 탐지 통계 API', auth:true,
+    example:'{\n  "totals":{"boar":12,"deer":34,"racoon":8},\n  "trend":[{"date":"2026-04-01","boar":2,"deer":5,"racoon":1}]\n}',
+    responses:[{code:'200',desc:'AI 통계 JSON'}] },
+];
+
+// ════════════════════════════════════════
+// 렌더링
+// ════════════════════════════════════════
+const TAGS = ['Auth','Board','Mypage','Profile','AIModel','FAQ','Introduce','Tip','Admin'];
+const TAG_LABELS = { Auth:'🔐 Auth', Board:'📋 Board', Mypage:'👤 Mypage', Profile:'🙍 Profile', AIModel:'🤖 AI Model', FAQ:'❓ FAQ', Introduce:'📄 Introduce', Tip:'💡 Tip', Admin:'⚙️ Admin' };
+
+function statusClass(code) {
+  if (code.startsWith('2') || code.startsWith('3')) return 'status-'+code.replace(/\D.*/,'00').slice(0,3);
+  return 'status-'+code.slice(0,3);
+}
+
+function renderParams(params) {
+  if (!params || !params.length) return '';
+  return `
+    <div class="detail-section">
+      <div class="detail-label">파라미터</div>
+      <table class="param-table">
+        <thead><tr><th>이름</th><th>위치</th><th>타입</th><th>필수</th><th>설명</th></tr></thead>
+        <tbody>
+          ${params.map(p=>`<tr>
+            <td><strong>${p.name}</strong></td>
+            <td><span class="type-badge">${p.in}</span></td>
+            <td><span class="type-badge">${p.type}</span></td>
+            <td>${p.required ? '<span class="required-badge">필수</span>' : '-'}</td>
+            <td>${p.desc}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderResponses(responses) {
+  return `
+    <div class="detail-section">
+      <div class="detail-label">응답</div>
+      ${responses.map(r=>`
+        <div class="response-item">
+          <span class="status-code status-${r.code.slice(0,3)}">${r.code}</span>
+          <span>${r.desc}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderExample(example) {
+  if (!example) return '';
+  return `
+    <div class="detail-section">
+      <div class="detail-label">응답 예시</div>
+      <div class="example-box">${example}</div>
+    </div>`;
+}
+
+function renderApis(data) {
+  const container = document.getElementById('apiList');
+  container.innerHTML = '';
+
+  TAGS.forEach(tag => {
+    const apis = data.filter(a => a.tag === tag);
+    if (!apis.length) return;
+
+    const section = document.createElement('div');
+    section.className = 'tag-section';
+    section.id = 'tag-' + tag;
+
+    section.innerHTML = `
+      <div class="tag-header" onclick="toggleTag('${tag}')">
+        <span class="tag-name">${TAG_LABELS[tag]}</span>
+        <span class="tag-count">${apis.length}</span>
+        <span class="tag-toggle" id="toggle-${tag}">▼</span>
+      </div>
+      <div id="apis-${tag}">
+        ${apis.map((api, i) => `
+          <div class="api-card" id="card-${tag}-${i}">
+            <div class="api-header" onclick="toggleApi('${tag}',${i})">
+              <span class="method ${api.method}">${api.method}</span>
+              <span class="api-path">${api.path}</span>
+              ${api.auth ? '<span class="auth-badge">🔒 인증</span>' : ''}
+              <span class="api-summary">${api.summary}</span>
+            </div>
+            <div class="api-detail" id="detail-${tag}-${i}">
+              ${renderParams(api.params)}
+              ${renderResponses(api.responses)}
+              ${renderExample(api.example)}
+            </div>
+          </div>`).join('')}
+      </div>`;
+
+    container.appendChild(section);
+  });
+}
+
+function toggleTag(tag) {
+  const apis   = document.getElementById('apis-' + tag);
+  const toggle = document.getElementById('toggle-' + tag);
+  if (apis.style.display === 'none') {
+    apis.style.display = 'block';
+    toggle.classList.remove('collapsed');
+  } else {
+    apis.style.display = 'none';
+    toggle.classList.add('collapsed');
+  }
+}
+
+function toggleApi(tag, i) {
+  const detail = document.getElementById(`detail-${tag}-${i}`);
+  detail.classList.toggle('open');
+}
+
+function scrollToTag(tag) {
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  event.target.classList.add('active');
+  if (tag === 'all') { window.scrollTo({top:0, behavior:'smooth'}); return; }
+  const el = document.getElementById('tag-' + tag);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+function filterApis(query) {
+  const q = query.toLowerCase();
+  if (!q) { renderApis(API_DATA); return; }
+  const filtered = API_DATA.filter(a =>
+    a.path.toLowerCase().includes(q) ||
+    a.summary.toLowerCase().includes(q) ||
+    a.tag.toLowerCase().includes(q) ||
+    a.method.toLowerCase().includes(q)
+  );
+  renderApis(filtered);
+}
+
+// 초기 렌더링
+renderApis(API_DATA);
+</script>
+</body>
+</html>
