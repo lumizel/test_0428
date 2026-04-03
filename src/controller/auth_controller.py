@@ -24,16 +24,15 @@ def login():
         session.update(member.to_session())
         return redirect(url_for('index'))
 
+
     except PermissionError as e:
-        # 비활성 계정 — login 페이지로 리다이렉트
+
         return f"""
             <script>
-                alert("{e}");
-                location.href = "/auth/login";
+                alert('비활성화 처리된 계정입니다.');
+                location.href = '/auth/login';
             </script>
         """
-    except ValueError as e:
-        return f"<script>alert('{e}'); history.back();</script>"
 
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
