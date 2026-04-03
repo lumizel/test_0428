@@ -50,6 +50,10 @@ def index():
     log_system('VISIT','INFO','PAGE_VIEW','/')
     return render_template('main.html')
 
+@app.route('/swagger-index.html')
+def swagger():
+    return render_template('api_docs.html')
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
