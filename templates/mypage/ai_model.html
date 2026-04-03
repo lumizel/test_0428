@@ -18,52 +18,104 @@
             <div class="ai-result-list">
                 {% if pagination.records %}
                     {% for item in pagination.records %}
-                    <div class="activity-item">
-                        <div style="flex: 1;">
-                            <div class="item-title">{{ item['filename'] }}</div>
-                            <div class="item-date">{{ item['created_at'] }}</div>
-                            <div style="margin-top: 8px;">
-                                <span class="badge-ai">멧돼지: {{ item['boar_count'] }}</span>
-                                <span class="badge-ai">고라니: {{ item['water_deer_count'] }}</span>
-                                <span class="badge-ai">너구리: {{ item['racoon_count'] }}</span>
+                    <div class="activity-item" id="item-{{ item.id }}">
+
+                        <!-- 미디어 썸네일 -->
+                        <div class="media-thumb-wrap"
+                             onclick="openModal('{{ item.image_url or '' }}', '{{ item.filename or '' }}')"
+                             title="미리보기">
+                            {% if item.image_url %}
+                                {# filename 기준으로 영상 여부 판단 (더 정확) #}
+                                {% set fname = item.filename or item.image_url %}
+                                {% set fname_lower = fname.lower() %}
+                                {% if fname_lower.endswith('.mp4') or
+                                      fname_lower.endswith('.mov') or
+                                      fname_lower.endswith('.avi') or
+                                      fname_lower.endswith('.webm') or
+                                      fname_lower.endswith('.mkv') %}
+                                    <div class="thumb-placeholder video">
+                                        <i class="bi bi-play-circle-fill"></i>
+                                    </div>
+                                {% else %}
+                                    <img src="{{ item.image_url }}"
+                                         alt="{{ item.filename }}"
+                                         class="thumb-img"
+                                         onerror="this.parentElement.innerHTML='<div class=\'thumb-placeholder none\'><i class=\'bi bi-file-earmark-x\'></i></div>'">
+                                {% endif %}
+                            {% else %}
+                                <div class="thumb-placeholder none">
+                                    <i class="bi bi-file-earmark-x"></i>
+                                </div>
+                            {% endif %}
+                            <div class="thumb-overlay"><i class="bi bi-zoom-in"></i></div>
+                        </div>
+
+                        <!-- 정보 -->
+                        <div style="flex:1; min-width:0;">
+                            <div class="item-title">{{ item.filename or '무제_분석결과' }}</div>
+                            <div class="item-date">
+                                {{ item.created_at.strftime('%Y.%m.%d %H:%M') if item.created_at else '-' }}
+                            </div>
+                            <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:4px;">
+                                {% if item.boar_count > 0 %}
+                                    <span class="badge-ai boar">🐗 멧돼지 {{ item.boar_count }}</span>
+                                {% endif %}
+                                {% if item.water_deer_count > 0 %}
+                                    <span class="badge-ai deer">🦌 고라니 {{ item.water_deer_count }}</span>
+                                {% endif %}
+                                {% if item.racoon_count > 0 %}
+                                    <span class="badge-ai racoon">🦝 너구리 {{ item.racoon_count }}</span>
+                                {% endif %}
+                                {% if item.boar_count == 0 and item.water_deer_count == 0 and item.racoon_count == 0 %}
+                                    <span class="badge-ai none">탐지 없음</span>
+                                {% endif %}
                             </div>
                         </div>
-                        <a href="{{ url_for('mypage.download_ai_report', analysis_id=item['id']) }}" class="download-btn" title="리포트 다운로드">
-                            <i class="bi bi-search"></i>
-                        </a>
-                        <a href="{{ url_for('mypage.delete_ai_result', analysis_id=item['id']) }}"
-                           class="download-btn ms-2"
-                           style="color: #dc3545; border-color: #dc3545;"
-                           onmouseover="this.style.backgroundColor='#dc3545'; this.style.color='white';"
-                           onmouseout="this.style.backgroundColor='transparent'; this.style.color='#dc3545';"
-                           title="삭제"
-                           onclick="return confirm('정말 삭제하시겠습니까?');">
-                            <i class="bi bi-trash"></i>
-                        </a>
+
+                        <!-- 액션 버튼 -->
+                        <div style="display:flex; gap:8px; flex-shrink:0;">
+                            {% if item.image_url %}
+                            <a href="{{ item.image_url }}" target="_blank" download
+                               class="action-btn" title="다운로드">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('mypage.download_ai_report', analysis_id=item.id) }}"
+                               class="action-btn" title="리포트 다운로드">
+                                <i class="bi bi-file-text"></i>
+                            </a>
+                            <button class="action-btn danger"
+                                    onclick="deleteResult({{ item.id }})"
+                                    title="삭제">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <div class="empty-msg"><br><br><br><br><br><br><br>분석 내역이 없습니다.</div>
+                    <div class="empty-msg">분석 내역이 없습니다.</div>
                 {% endif %}
             </div>
 
+            <!-- 페이지네이션 -->
             <nav class="mt-4 mb-3">
                 <ul class="pagination justify-content-center">
                     {% if pagination.has_prev %}
                     <li class="page-item">
-                        <a class="page-link border-0 shadow-sm mx-1" href="{{ url_for('mypage.ai_results', page=pagination.prev_num) }}">&laquo;</a>
+                        <a class="page-link border-0 shadow-sm mx-1"
+                           href="{{ url_for('mypage.ai_results', page=pagination.prev_num) }}">&laquo;</a>
                     </li>
                     {% endif %}
-
                     {% for p in range(1, pagination.total_pages + 1) %}
                     <li class="page-item {{ 'active' if p == pagination.page }}">
-                        <a class="page-link border-0 shadow-sm mx-1" href="{{ url_for('mypage.ai_results', page=p) }}">{{ p }}</a>
+                        <a class="page-link border-0 shadow-sm mx-1"
+                           href="{{ url_for('mypage.ai_results', page=p) }}">{{ p }}</a>
                     </li>
                     {% endfor %}
-
                     {% if pagination.has_next %}
                     <li class="page-item">
-                        <a class="page-link border-0 shadow-sm mx-1" href="{{ url_for('mypage.ai_results', page=pagination.next_num) }}">&raquo;</a>
+                        <a class="page-link border-0 shadow-sm mx-1"
+                           href="{{ url_for('mypage.ai_results', page=pagination.next_num) }}">&raquo;</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -71,8 +123,93 @@
         </div>
 
         <div class="home-back">
-            <a href="/"><br><br>홈으로 돌아가기</a>
+            <a href="/">홈으로 돌아가기</a>
         </div>
     </div>
 </div>
+
+<!-- 미디어 모달 -->
+<div class="modal-backdrop" id="mediaModal"
+     onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+        <div class="modal-header-row">
+            <span id="modalFilename" class="modal-filename"></span>
+            <button onclick="closeModal()" class="modal-close-btn">✕</button>
+        </div>
+        <div id="modalContent" class="modal-content-area"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const VIDEO_EXTS = ['mp4', 'mov', 'avi', 'webm', 'mkv'];
+
+function isVideoFile(filename) {
+    if (!filename) return false;
+    const ext = filename.split('.').pop().toLowerCase();
+    return VIDEO_EXTS.includes(ext);
+}
+
+function openModal(url, filename) {
+    if (!url) return;
+
+    // filename 기준으로 영상 판단 (URL보다 정확)
+    const isVideo = isVideoFile(filename) || isVideoFile(url);
+
+    const content = document.getElementById('modalContent');
+    document.getElementById('modalFilename').textContent = filename || '미리보기';
+
+    if (isVideo) {
+        // Cloudinary URL에 mp4 변환 파라미터 추가
+        let playUrl = url;
+        if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+            playUrl = url.replace('/upload/', '/upload/f_mp4,vc_auto/');
+        }
+        content.innerHTML = `
+            <video controls autoplay
+                   style="max-width:100%; max-height:65vh; border-radius:8px;">
+                <source src="${playUrl}" type="video/mp4">
+                브라우저가 동영상을 지원하지 않습니다.
+            </video>`;
+    } else {
+        content.innerHTML = `
+            <img src="${url}" alt="${filename}"
+                 style="max-width:100%; max-height:65vh;
+                        border-radius:8px; object-fit:contain;">`;
+    }
+    document.getElementById('mediaModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('modalContent').innerHTML = '';
+    document.getElementById('mediaModal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+});
+
+async function deleteResult(analysisId) {
+    if (!confirm('이 분석 결과를 삭제하겠습니까?')) return;
+
+    try {
+        const res = await fetch(`/mypage/delete_ai_result/${analysisId}`);
+        if (res.ok || res.redirected) {
+            const item = document.getElementById(`item-${analysisId}`);
+            item.style.transition = 'opacity 0.3s';
+            item.style.opacity    = '0';
+            setTimeout(() => {
+                item.remove();
+                if (!document.querySelector('.activity-item')) location.reload();
+            }, 300);
+        } else {
+            alert('삭제 실패');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('서버 통신 오류');
+    }
+}
+</script>
 {% endblock %}

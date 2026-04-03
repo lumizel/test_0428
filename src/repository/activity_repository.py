@@ -132,14 +132,12 @@ class ActivityRepository:
     # ════════════════════════════════════════
     # AI 분석 결과
     # ════════════════════════════════════════
-
     def find_ai_results(
-        self,
-        user_id: int,
-        page: int = 1,
-        per_page: int = 5,
+            self,
+            user_id: int,
+            page: int = 1,
+            per_page: int = 5,
     ) -> tuple[list[AIAnalysis], int]:
-        """AI 분석 결과 목록 + 전체 개수"""
         offset = (page - 1) * per_page
 
         total_row = fetch_query(
@@ -148,23 +146,25 @@ class ActivityRepository:
         )
         total_count = total_row['cnt'] if total_row else 0
 
+        # ── 핵심 수정: image_url 컬럼 추가 ──
         rows = fetch_query(
             """
-            SELECT id, filename, boar_count, water_deer_count, racoon_count, created_at
+            SELECT id, filename, image_url,
+                   boar_count, water_deer_count, racoon_count, created_at
             FROM ai_analysis
-            WHERE user_id = %s AND active = 1
+            WHERE user_id = %s
             ORDER BY created_at DESC
             LIMIT %s OFFSET %s
             """,
             (user_id, per_page, offset)
         )
-        # user_id, image_url 없이 조회했으므로 직접 매핑
+
         items = [
             AIAnalysis(
                 id=row['id'],
                 user_id=user_id,
                 filename=row.get('filename') or '무제_분석결과',
-                image_url='',
+                image_url=row.get('image_url') or '',  # ← 추가
                 boar_count=row.get('boar_count', 0),
                 water_deer_count=row.get('water_deer_count', 0),
                 racoon_count=row.get('racoon_count', 0),

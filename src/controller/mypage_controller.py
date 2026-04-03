@@ -188,9 +188,14 @@ def ai_results():
             user_id = session['user_id'],
             page    = request.args.get('page', 1, type=int),
         )
+        # pagination 키 없이 data를 바로 넘김
         return render_template('mypage/ai_model.html', pagination=data)
     except Exception as e:
-        return render_template('mypage/ai_model.html', pagination={'records': []})
+        return render_template('mypage/ai_model.html', pagination={
+            'records': [], 'page': 1, 'total_pages': 1,
+            'has_prev': False, 'has_next': False,
+            'prev_num': 0, 'next_num': 2
+        })
 
 
 @mypage_bp.route('/download_report/<int:analysis_id>')
