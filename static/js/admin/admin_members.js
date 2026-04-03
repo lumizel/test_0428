@@ -7,7 +7,6 @@ function openEditMemberModal(id, name, nickname, role, active, birthdate) {
     document.getElementById('edit_name').value      = name;
     document.getElementById('edit_nickname').value  = nickname;
     document.getElementById('edit_password').value  = '';
-    document.getElementById('edit_role').value      = role;
     document.getElementById('edit_active').value    = String(active);
     document.getElementById('edit_birthdate').value = birthdate;
 
@@ -16,20 +15,21 @@ function openEditMemberModal(id, name, nickname, role, active, birthdate) {
     const activeSelect = document.getElementById('edit_active');
     const currentRole  = document.getElementById('current_user_role').value;
 
-    // 등급 select 처리
-    // - 대상이 admin이거나, 현재 로그인 유저가 manager면 등급 변경 불가
-    const roleDisabled = (role === 'admin') || (currentRole === 'manager');
-    if (roleDisabled) {
-        roleSelect.setAttribute('disabled', true);
+    if (currentRole === 'manager') {
+        roleHidden.value    = role;
+        roleHidden.disabled = false;
+    } else if (role === 'admin') {
+        if (roleSelect) roleSelect.setAttribute('disabled', true);
         roleHidden.value    = role;
         roleHidden.disabled = false;
     } else {
-        roleSelect.removeAttribute('disabled');
+        if (roleSelect) {
+            roleSelect.value = role;
+            roleSelect.removeAttribute('disabled');
+        }
         roleHidden.disabled = true;
     }
 
-    // active select 처리
-    // - 대상이 admin이면 활성여부 변경 불가
     if (role === 'admin') {
         activeSelect.setAttribute('disabled', true);
         activeSelect.title = '최고 관리자의 활성 상태는 변경할 수 없습니다.';

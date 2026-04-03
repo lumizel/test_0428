@@ -171,11 +171,18 @@
             </div>
             <div class="modal-field">
                 <label class="modal-label">등급</label>
-                <select class="modal-input" name="role" id="edit_role">
-                    <option value="user">미 (일반)</option>
-                    <option value="manager">레 (매니저)</option>
-                </select>
-                <input type="hidden" name="role" id="edit_role_hidden" disabled>
+                {% if current_user_role == 'admin' %}
+                    <select class="modal-input" name="role" id="edit_role">
+                        <option value="user">미 (일반)</option>
+                        <option value="manager">레 (매니저)</option>
+                    </select>
+                    <input type="hidden" name="role" id="edit_role_hidden" disabled>
+                {% else %}
+                    <!-- manager는 등급 필드 자체를 숨기고 hidden으로 현재값 유지 -->
+                    <input class="modal-input" type="text" value="변경 불가" disabled
+                           style="background:#f8fafa;color:var(--text-muted);cursor:not-allowed;">
+                    <input type="hidden" name="role" id="edit_role_hidden">
+                {% endif %}
             </div>
             <div class="modal-field">
                 <label class="modal-label">상태</label>
