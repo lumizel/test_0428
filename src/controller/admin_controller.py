@@ -135,6 +135,13 @@ def delete_member_trash(member_id, board_id):
            else redirect(url_for('admin.member_detail', member_id=member_id, tab='trash'))
 
 
+@admin_bp.route('/members/<int:member_id>/trash/<int:board_id>/restore', methods=['POST'])
+@admin_required
+def restore_member_trash(member_id, board_id):
+    admin_service.restore_board_from_trash(board_id)
+    return ('', 200) if request.headers.get('X-Requested-With') == 'XMLHttpRequest' \
+           else redirect(url_for('admin.member_detail', member_id=member_id, tab='trash'))
+
 # ════════════════════════════════════════
 # 게시글 관리
 # ════════════════════════════════════════

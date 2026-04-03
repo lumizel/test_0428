@@ -57,17 +57,17 @@
         <a href="/mypage" style="text-decoration:none;">
             <div class="admin-profile">
                 <div class="admin-avatar">
-                    {% if current_user_img %}
-                        <img src="{{ current_user_img }}" alt="프로필">
+                    {% if session.get('user_profile') %}
+                        <img src="{{ session.get('user_profile') }}" alt="프로필">
                     {% else %}
-                        {{ current_user_name[0] if current_user_name else '?' }}
+                        {{ session.get('user_name', '?')[0] }}
                     {% endif %}
                 </div>
                 <div class="admin-info">
-                    <div class="name">{{ current_user_name }}</div>
+                    <div class="name">{{ session.get('user_name') }}</div>
                     <div class="role">
-                        {% if current_user_role == 'admin' %}관리자
-                        {% elif current_user_role == 'manager' %}매니져
+                        {% if session.get('user_role') == 'admin' %}관리자
+                        {% elif session.get('user_role') == 'manager' %}매니져
                         {% endif %}
                     </div>
                 </div>

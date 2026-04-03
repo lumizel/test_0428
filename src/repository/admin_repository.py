@@ -155,26 +155,23 @@ class AdminRepository:
         try:
             with conn.cursor() as cursor:
                 if tab == 'boards':
-                    cursor.execute(
-                        "SELECT COUNT(*) AS cnt FROM boards "
-                        "WHERE member_id=%s AND deleted_at IS NULL",
-                        (member_id,)
-                    )
+                    cursor.execute("""
+                        SELECT COUNT(*) AS cnt FROM boards
+                        WHERE member_id=%s AND deleted_at IS NULL AND active=1
+                    """, (member_id,))
                     total = cursor.fetchone()['cnt']
-                    cursor.execute(
-                        """
+                    cursor.execute("""
                         SELECT id, title, category, is_pinned, visits, created_at, active
                         FROM boards
-                        WHERE member_id=%s AND deleted_at IS NULL
+                        WHERE member_id=%s AND deleted_at IS NULL AND active=1
                         ORDER BY created_at DESC
                         LIMIT %s OFFSET %s
-                        """,
-                        (member_id, page_size, offset)
-                    )
+                    """, (member_id, page_size, offset))
+
 
                 elif tab == 'comments':
                     cursor.execute(
-                        "SELECT COUNT(*) AS cnt FROM board_comments WHERE member_id=%s",
+                        "SELECT COUNT(*) AS cnt FROM board_comments WHERE member_id=%s AND active=1",
                         (member_id,)
                     )
                     total = cursor.fetchone()['cnt']
@@ -184,7 +181,7 @@ class AdminRepository:
                                b.title AS board_title, b.id AS board_id
                         FROM board_comments c
                         LEFT JOIN boards b ON c.board_id = b.id
-                        WHERE c.member_id=%s
+                        WHERE c.member_id=%s AND c.active=1
                         ORDER BY c.created_at DESC
                         LIMIT %s OFFSET %s
                         """,
@@ -293,6 +290,21 @@ class AdminRepository:
         except Exception as e:
             print(f"get_member_tab_data() 오류: {e}")
             return [], 1
+
+    def restore_board_from_trash(self, board_id: int) -> bool:
+        conn = Session.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE boards SET deleted_at=NULL, active=1 WHERE id=%s",
+                    (board_id,)
+                )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"restore_board_from_trash() 오류: {e}")
+            conn.rollback()
+            return False
 
     # ════════════════════════════════════════
     # 게시글

@@ -17,11 +17,12 @@ class AdminService:
     # 사이드바 컨텍스트
     # ════════════════════════════════════════
 
-    def get_sidebar_context(self, members: list, boards: list) -> dict:
+    def get_sidebar_context(self, members: list, boards: list, user_role: str = '', user_name: str = '',
+                            user_img: str = '') -> dict:
         """사이드바 배지용 카운트 — 이미 조회한 데이터 재사용"""
         return {
             'new_members_count': self._count_today_new(members, 'created_at', hours=24),
-            'new_boards_count':  self._count_today_new(boards,  'created_at', hours=3),
+            'new_boards_count': self._count_today_new(boards, 'created_at', hours=3),
         }
 
     # ════════════════════════════════════════
@@ -170,6 +171,9 @@ class AdminService:
 
     def toggle_member_active(self, member_id: int) -> bool:
         return self.admin_repo.toggle_member_active(member_id)
+
+    def restore_board_from_trash(self, board_id: int):
+        self.admin_repo.restore_board_from_trash(board_id)
 
     # ════════════════════════════════════════
     # 게시글 관리
